@@ -23,7 +23,7 @@ export const DOCUMENT_CHECKLIST_ITEMS = [
   { key: "signatoryEmiratesId", label: "Emirates ID Copies of Authorized Signatories" },
   { key: "signatoryPassport", label: "Passport Copies of Authorized Signatories" },
   { key: "attestedSignature", label: "Attested Signature Copy / Power of Attorney" },
-  { key: "securityCheque", label: "Security Cheque" },
-  { key: "advanceCheque", label: "Advance Cheque" },
-  { key: "bankStatement", label: "Bank Statement" },
+  { key: "securityCheque", label: "Security Cheque", required: true },
+  { key: "advanceCheque", label: "Advance Cheque", required: true },
+  { key: "bankStatement", label: "Bank Statement", required: true },
 ] as const;

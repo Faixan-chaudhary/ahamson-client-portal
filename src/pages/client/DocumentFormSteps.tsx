@@ -73,10 +73,10 @@ export function SignatoriesStep({ data, onChange, field, title, errors }: StepPr
             {persons.length > 1 && <button onClick={() => remove(i)} className="text-red-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>}
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <FormField label="Name" required half><Input value={p.name} onChange={v => update(i, "name", v)} /></FormField>
-            <FormField label="Position" required half><Input value={p.position} onChange={v => update(i, "position", v)} /></FormField>
+            <FormField label="Name" required error={err(errors, `lpoSignatories.${i}.name`)}><Input value={p.name} onChange={v => update(i, "name", v)} /></FormField>
+            <FormField label="Position" required error={err(errors, `lpoSignatories.${i}.position`)}><Input value={p.position} onChange={v => update(i, "position", v)} /></FormField>
           </div>
-          <FormField label="Digital Signature" required>
+          <FormField label="Digital Signature" required error={err(errors, `lpoSignatories.${i}.signature`)}>
             <SignaturePad value={p.signature} onChange={v => update(i, "signature", v)} />
           </FormField>
         </div>
@@ -98,8 +98,8 @@ export function BankReferencesStep({ data, onChange, errors }: StepProps) {
     <div className="space-y-3">
       {rows.map((r, i) => (
         <div key={i} className="grid grid-cols-2 gap-3 p-3 rounded-xl border border-[#0B1F3A]/10">
-          <FormField label="Bank & Branch" required half><Input value={r.bankBranch} onChange={v => update(i, "bankBranch", v)} /></FormField>
-          <FormField label="IBAN" required half><Input value={r.iban} onChange={v => update(i, "iban", v)} /></FormField>
+          <FormField label="Bank & Branch" required half error={err(errors, `bankReferences.${i}.bankBranch`)}><Input value={r.bankBranch} onChange={v => update(i, "bankBranch", v)} /></FormField>
+          <FormField label="IBAN" required half error={err(errors, `bankReferences.${i}.iban`)}><Input value={r.iban} onChange={v => update(i, "iban", v)} /></FormField>
           {rows.length > 1 && <button onClick={() => onChange({ ...data, bankReferences: rows.filter((_, j) => j !== i) })} className="col-span-2 text-xs text-red-500 flex items-center gap-1"><Trash2 className="w-3 h-3" />Remove row</button>}
         </div>
       ))}
@@ -118,10 +118,10 @@ export function TradeCreditStep({ data, onChange, errors }: StepProps) {
     <div className="space-y-3">
       {rows.map((r, i) => (
         <div key={i} className="grid grid-cols-2 gap-3 p-3 rounded-xl border border-[#0B1F3A]/10">
-          <FormField label="Company Name" required><Input value={r.companyName} onChange={v => update(i, "companyName", v)} /></FormField>
-          <FormField label="Telephone" required half><Input value={r.telephone} onChange={v => update(i, "telephone", v)} /></FormField>
-          <FormField label="Mobile" required half><Input value={r.mobile} onChange={v => update(i, "mobile", v)} /></FormField>
-          <FormField label="Email" required half><Input value={r.email} onChange={v => update(i, "email", v)} type="email" /></FormField>
+          <FormField label="Company Name" required error={err(errors, `tradeCreditReferences.${i}.companyName`)}><Input value={r.companyName} onChange={v => update(i, "companyName", v)} /></FormField>
+          <FormField label="Telephone" required half error={err(errors, `tradeCreditReferences.${i}.telephone`)}><Input value={r.telephone} onChange={v => update(i, "telephone", v)} /></FormField>
+          <FormField label="Mobile" required half error={err(errors, `tradeCreditReferences.${i}.mobile`)}><Input value={r.mobile} onChange={v => update(i, "mobile", v)} /></FormField>
+          <FormField label="Email" required half error={err(errors, `tradeCreditReferences.${i}.email`)}><Input value={r.email} onChange={v => update(i, "email", v)} type="email" /></FormField>
           {rows.length > 1 && <button onClick={() => onChange({ ...data, tradeCreditReferences: rows.filter((_, j) => j !== i) })} className="col-span-2 text-xs text-red-500 flex items-center gap-1"><Trash2 className="w-3 h-3" />Remove row</button>}
         </div>
       ))}
@@ -137,10 +137,11 @@ export function DocumentsStep({ data, onChange, errors }: StepProps) {
   return (
     <div className="space-y-3">
       {DOCUMENT_CHECKLIST_ITEMS.map(d => (
-        <FileUpload key={d.key} label={d.label}
+        <FileUpload key={d.key} label={d.label} required={d.required}
           fileName={data.documents[d.key]}
           onChange={name => setDoc(d.key, name)}
           checked={!!data.documents[d.key]}
+          error={err(errors, `documents.${d.key}`)}
           onCheck={() => {}} />
       ))}
     </div>

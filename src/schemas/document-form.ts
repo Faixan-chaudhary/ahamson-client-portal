@@ -59,7 +59,15 @@ export const tradeCreditSchema = z.object({
 });
 
 export const documentsSchema = z.object({
-  documents: z.record(z.string().nullable()),
+  documents: z.record(z.string().nullable()).refine(
+    (doc) => {
+      for (const item of DOCUMENT_CHECKLIST_ITEMS) {
+        if (item.required && !doc[item.key]) return false;
+      }
+      return true;
+    },
+    { message: "All required documents must be uploaded", path: ["documents"] }
+  ),
 });
 
 export const declarationSchema = z.object({

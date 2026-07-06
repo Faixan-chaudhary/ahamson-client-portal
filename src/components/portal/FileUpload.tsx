@@ -9,7 +9,7 @@ interface FileUploadProps {
   onCheck?: (v: boolean) => void;
 }
 
-export function FileUpload({ label, fileName, onChange, checked, onCheck }: FileUploadProps) {
+export function FileUpload({ label, required, fileName, onChange, checked, onCheck, error }: FileUploadProps) {
   return (
     <div className={cn("flex items-center gap-3 p-4 rounded-xl border transition-all",
       checked ? "border-[#F7931E]/40 bg-[#F7931E]/5" : "border-[#0B1F3A]/10 bg-[#F8F9FC]")}>
