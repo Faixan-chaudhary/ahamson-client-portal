@@ -73,10 +73,10 @@ export function SignatoriesStep({ data, onChange, field, title, errors }: StepPr
             {persons.length > 1 && <button onClick={() => remove(i)} className="text-red-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>}
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <FormField label="Name" required error={err(errors, `lpoSignatories.${i}.name`)}><Input value={p.name} onChange={v => update(i, "name", v)} /></FormField>
-            <FormField label="Position" required error={err(errors, `lpoSignatories.${i}.position`)}><Input value={p.position} onChange={v => update(i, "position", v)} /></FormField>
+            <FormField label="Name" required error={err(errors, `${field}.${i}.name`)}><Input value={p.name} onChange={v => update(i, "name", v)} /></FormField>
+            <FormField label="Position" required error={err(errors, `${field}.${i}.position`)}><Input value={p.position} onChange={v => update(i, "position", v)} /></FormField>
           </div>
-          <FormField label="Digital Signature" required error={err(errors, `lpoSignatories.${i}.signature`)}>
+          <FormField label="Digital Signature" required error={err(errors, `${field}.${i}.signature`)}>
             <SignaturePad value={p.signature} onChange={v => update(i, "signature", v)} />
           </FormField>
         </div>
@@ -100,7 +100,7 @@ export function BankReferencesStep({ data, onChange, errors }: StepProps) {
         <div key={i} className="grid grid-cols-2 gap-3 p-3 rounded-xl border border-[#0B1F3A]/10">
           <FormField label="Bank & Branch" required half error={err(errors, `bankReferences.${i}.bankBranch`)}><Input value={r.bankBranch} onChange={v => update(i, "bankBranch", v)} /></FormField>
           <FormField label="IBAN" required half error={err(errors, `bankReferences.${i}.iban`)}><Input value={r.iban} onChange={v => update(i, "iban", v)} /></FormField>
-          {rows.length > 1 && <button onClick={() => onChange({ ...data, bankReferences: rows.filter((_, j) => j !== i) })} className="col-span-2 text-xs text-red-500 flex items-center gap-1"><Trash2 className="w-3 h-3" />Remove row</button>}
+          {rows.length > 1 && <button onClick={() => onChange({ ...data, bankReferences: rows.filter((_, j) => j !== i) })} className="col-span-2 text-xs text-red-500 flex items-center gap-1"><Trash2 className="w-3 h-3" />Remove row</button>Н
         </div>
       ))}
       <Button variant="outline" icon={<Plus className="w-4 h-4" />} onClick={() => onChange({ ...data, bankReferences: [...rows, { bankBranch: "", iban: "" }] })}>Add Row</Button>
@@ -122,7 +122,7 @@ export function TradeCreditStep({ data, onChange, errors }: StepProps) {
           <FormField label="Telephone" required half error={err(errors, `tradeCreditReferences.${i}.telephone`)}><Input value={r.telephone} onChange={v => update(i, "telephone", v)} /></FormField>
           <FormField label="Mobile" required half error={err(errors, `tradeCreditReferences.${i}.mobile`)}><Input value={r.mobile} onChange={v => update(i, "mobile", v)} /></FormField>
           <FormField label="Email" required half error={err(errors, `tradeCreditReferences.${i}.email`)}><Input value={r.email} onChange={v => update(i, "email", v)} type="email" /></FormField>
-          {rows.length > 1 && <button onClick={() => onChange({ ...data, tradeCreditReferences: rows.filter((_, j) => j !== i) })} className="col-span-2 text-xs text-red-500 flex items-center gap-1"><Trash2 className="w-3 h-3" />Remove row</button>}
+          {rows.length > 1 && <button onClick={() => onChange({ ...data, tradeCreditReferences: rows.filter((_, j) => j !== i) })} className="col-span-2 text-xs text-red-500 flex items-center gap-1"><Trash2 className="w-3 h-3" />Remove row</button>Н
         </div>
       ))}
       <Button variant="outline" icon={<Plus className="w-4 h-4" />} onClick={() => onChange({ ...data, tradeCreditReferences: [...rows, { companyName: "", telephone: "", mobile: "", email: "" }] })}>Add Row</Button>
@@ -152,12 +152,15 @@ export function DeclarationStep({ data, onChange, errors }: StepProps) {
   const set = (k: keyof DocumentFormData, v: string | boolean) => onChange({ ...data, [k]: v });
   return (
     <div className="space-y-3">
-      <label className="flex items-start gap-3 p-4 rounded-xl border border-[#0B1F3A]/10 cursor-pointer">
+      <label className={cn(
+          "flex items-start gap-3 p-4 rounded-xl border cursor-pointer",
+          err(errors, "agreementConfirmed") ? "border-red-500" : "border-[#0B1F3A]/10"
+        )}>
         <input type="checkbox" checked={data.agreementConfirmed} onChange={e => set("agreementConfirmed", e.target.checked)}
           className="w-4 h-4 mt-0.5 rounded text-[#F7931E]" />
         <span className="text-sm text-[#64748B]">I confirm the information provided is accurate and agree to the terms and conditions. <span className="text-[#F7931E]">*</span></span>
       </label>
-      {err(errors, "agreementConfirmed") && <p className="text-red-500 text-xs">{err(errors, "agreementConfirmed")}</p>}
+      {err(errors, "agreementConfirmed") && <p className="text-red-500 text-xs mt-1">{err(errors, "agreementConfirmed")}</p>}
       <div className="grid grid-cols-2 gap-3">
         <FormField label="Maximum Credit Limit Required" required half error={err(errors, "maxCreditLimit")}><Input value={data.maxCreditLimit} onChange={v => set("maxCreditLimit", v)} /></FormField>
         <FormField label="Credit Period Required (days)" required half error={err(errors, "creditPeriodDays")}><Input value={data.creditPeriodDays} onChange={v => set("creditPeriodDays", v)} type="number" /></FormField>
@@ -169,10 +172,14 @@ export function DeclarationStep({ data, onChange, errors }: StepProps) {
         <SignaturePad value={data.declarationSignature} onChange={v => set("declarationSignature", v)} />
       </FormField>
       <FormField label="Company Stamp Upload">
-        <label className="flex items-center justify-center h-28 rounded-2xl border-2 border-dashed border-[#F7931E]/30 bg-[#F8F9FC] cursor-pointer hover:border-[#F7931E]/50 transition-colors">
+        <label className={cn(
+          "flex items-center justify-center h-28 rounded-2xl border-2 border-dashed bg-[#F8F9FC] cursor-pointer hover:border-[#F7931E]/50 transition-colors",
+          err(errors, "companyStamp") ? "border-red-500" : "border-[#F7931E]/30"
+        )}>
           <input type="file" className="hidden" onChange={e => set("companyStamp", e.target.files?.[0]?.name ?? null)} />
           <span className="text-sm text-[#94A3B8]">{data.companyStamp || "Click to upload company stamp"}</span>
         </label>
+        {err(errors, "companyStamp") && <p className="text-red-500 text-xs mt-1">{err(errors, "companyStamp")}</p>}
       </FormField>
     </div>
   );
