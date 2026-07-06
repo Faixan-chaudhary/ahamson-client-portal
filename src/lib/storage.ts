@@ -1,6 +1,6 @@
 import type { CreateLinkInput, DocumentFormData, Submission } from "./types";
 import { MOCK_SUBMISSIONS } from "./mock-data";
-import { generateToken } from "./utils";
+import { generateToken, getAppOrigin } from "./utils";
 
 const SUBMISSIONS_KEY = "ahamson_submissions";
 const DRAFT_KEY = (token: string) => `ahamson_draft_${token}`;
@@ -109,5 +109,5 @@ export function isLinkExpired(token: string): boolean {
 }
 
 export function getClientLink(token: string) {
-  return `${window.location.origin}/client/document/${token}`;
+  return `${getAppOrigin()}/client/document/${token}`;
 }
