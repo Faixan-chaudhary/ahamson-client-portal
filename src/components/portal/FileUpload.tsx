@@ -3,10 +3,12 @@ import { cn } from "@/lib/utils";
 
 interface FileUploadProps {
   label: string;
+  required?: boolean;
   fileName: string | null;
   onChange: (name: string | null) => void;
   checked?: boolean;
   onCheck?: (v: boolean) => void;
+  error?: string;
 }
 
 export function FileUpload({ label, required, fileName, onChange, checked, onCheck, error }: FileUploadProps) {
