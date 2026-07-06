@@ -135,13 +135,13 @@ export function DocumentFormPage() {
           </div>
 
           <div className="p-5 lg:p-6">
-            {step === 1 && <CompanyInfoStep data={form} onChange={setForm} errors={errors as never} />}
-            {step === 2 && <SignatoriesStep data={form} onChange={setForm} field="lpoSignatories" title="Authorized persons to sign LPO" />}
-            {step === 3 && <SignatoriesStep data={form} onChange={setForm} field="chequeSignatories" title="Authorized persons to sign cheques" />}
-            {step === 4 && <BankReferencesStep data={form} onChange={setForm} />}
-            {step === 5 && <TradeCreditStep data={form} onChange={setForm} />}
-            {step === 6 && <DocumentsStep data={form} onChange={setForm} />}
-            {step === 7 && <DeclarationStep data={form} onChange={setForm} errors={errors as never} />}
+            {step === 1 && <CompanyInfoStep data={form} onChange={setForm} errors={errors} />}
+            {step === 2 && <SignatoriesStep data={form} onChange={setForm} field="lpoSignatories" title="Authorized persons to sign LPO" errors={errors} />}
+            {step === 3 && <SignatoriesStep data={form} onChange={setForm} field="chequeSignatories" title="Authorized persons to sign Cheques" errors={errors} />}
+            {step === 4 && <BankReferencesStep data={form} onChange={setForm} errors={errors} />}
+            {step === 5 && <TradeCreditStep data={form} onChange={setForm} errors={errors} />}
+            {step === 6 && <DocumentsStep data={form} onChange={setForm} errors={errors} />}
+            {step === 7 && <DeclarationStep data={form} onChange={setForm} errors={errors} />}
           </div>
 
           <div className="px-5 lg:px-6 py-3.5 border-t border-[#0B1F3A]/6 bg-[#F8F9FC] flex items-center justify-between flex-wrap gap-2">

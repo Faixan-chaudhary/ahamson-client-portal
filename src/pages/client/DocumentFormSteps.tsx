@@ -10,14 +10,12 @@ import type { FieldErrors } from "react-hook-form";
 interface StepProps {
   data: DocumentFormData;
   onChange: (data: DocumentFormData) => void;
-  errors?: FieldErrors<DocumentFormData>;
+  errors: Record<string, string>;
 }
 
-function err(errors: FieldErrors<DocumentFormData> | undefined, path: string) {
-  const parts = path.split(".");
-  let cur: unknown = errors;
-  for (const p of parts) cur = (cur as Record<string, unknown>)?.[p];
-  return (cur as { message?: string })?.message;
+function err(errors: Record<string, string> | undefined, path: string): string | undefined {
+  if (!errors) return undefined;
+  return errors[path];
 }
 
 export function CompanyInfoStep({ data, onChange, errors }: StepProps) {
@@ -55,7 +53,7 @@ export function CompanyInfoStep({ data, onChange, errors }: StepProps) {
   );
 }
 
-export function SignatoriesStep({ data, onChange, field, title }: StepProps & { field: "lpoSignatories" | "chequeSignatories"; title: string }) {
+export function SignatoriesStep({ data, onChange, field, title, errors }: StepProps & { field: "lpoSignatories" | "chequeSignatories"; title: string }) {
   const persons = data[field];
   const update = (i: number, k: "name" | "position" | "signature", v: string) => {
     const next = [...persons];
@@ -90,7 +88,7 @@ export function SignatoriesStep({ data, onChange, field, title }: StepProps & { 
   );
 }
 
-export function BankReferencesStep({ data, onChange }: StepProps) {
+export function BankReferencesStep({ data, onChange, errors }: StepProps) {
   const rows = data.bankReferences;
   const update = (i: number, k: "bankBranch" | "iban", v: string) => {
     const next = [...rows]; next[i] = { ...next[i], [k]: v };
@@ -110,7 +108,7 @@ export function BankReferencesStep({ data, onChange }: StepProps) {
   );
 }
 
-export function TradeCreditStep({ data, onChange }: StepProps) {
+export function TradeCreditStep({ data, onChange, errors }: StepProps) {
   const rows = data.tradeCreditReferences;
   const update = (i: number, k: keyof typeof rows[0], v: string) => {
     const next = [...rows]; next[i] = { ...next[i], [k]: v };
@@ -132,7 +130,7 @@ export function TradeCreditStep({ data, onChange }: StepProps) {
   );
 }
 
-export function DocumentsStep({ data, onChange }: StepProps) {
+export function DocumentsStep({ data, onChange, errors }: StepProps) {
   const setDoc = (key: string, name: string | null) => {
     onChange({ ...data, documents: { ...data.documents, [key]: name } });
   };
