@@ -1,6 +1,5 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { FilePlus, Link2 } from "lucide-react";
-import { AdminLayout } from "@/components/portal/AdminLayout";
 import { PageHeader } from "@/components/portal/Logo";
 import { CreateLinkModal } from "@/components/portal/CreateLinkModal";
 import { CopyButton } from "@/components/portal/CopyButton";
@@ -8,14 +7,15 @@ import { Button } from "@/components/portal/Button";
 import { StatusBadge } from "@/components/portal/StatusBadge";
 import { getSubmissions, getClientLink } from "@/lib/storage";
 import { formatDateTime } from "@/lib/utils";
+import { useApiQuery } from "@/hooks/useApiQuery";
 
 export function LinksPage() {
   const [showModal, setShowModal] = useState(false);
-  const [refresh, setRefresh] = useState(0);
-  const submissions = useMemo(() => getSubmissions(), [refresh]);
+  const { data: submissions, loading, refresh } = useApiQuery(() => getSubmissions(), []);
+  const rows = submissions ?? [];
 
   return (
-    <AdminLayout>
+    <>
       <PageHeader title="Document Links" subtitle="Create and manage secure client document links">
         <Button variant="gold" icon={<FilePlus className="w-4 h-4" />} onClick={() => setShowModal(true)}>
           Create Secure Document Link
@@ -26,7 +26,7 @@ export function LinksPage() {
         <div className="bg-white rounded-2xl border border-[#0B1F3A]/8 overflow-hidden portal-panel">
           <div className="px-6 py-4 border-b border-[#0B1F3A]/6">
             <h3 className="font-['Playfair_Display'] font-bold text-[#0B1F3A]">Active Document Links</h3>
-            <p className="text-[#94A3B8] text-xs mt-1">{submissions.length} link{submissions.length !== 1 ? "s" : ""} created</p>
+            <p className="text-[#94A3B8] text-xs mt-1">{rows.length} link{rows.length !== 1 ? "s" : ""} created</p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -41,13 +41,17 @@ export function LinksPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#0B1F3A]/5">
-                {submissions.length === 0 ? (
+                {loading ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-12 text-center text-[#94A3B8]">Loading links…</td>
+                  </tr>
+                ) : rows.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-6 py-12 text-center text-[#94A3B8]">
                       No links yet. Create your first secure document link.
                     </td>
                   </tr>
-                ) : submissions.map(s => (
+                ) : rows.map(s => (
                   <tr key={s.id} className="hover:bg-[#F8F9FC]/60 transition-colors">
                     <td className="px-6 py-4 font-semibold text-[#0B1F3A]">{s.clientCompany}</td>
                     <td className="px-4 py-4 text-[#64748B]">{s.contactPerson}</td>
@@ -70,7 +74,7 @@ export function LinksPage() {
         </div>
       </div>
 
-      <CreateLinkModal open={showModal} onClose={() => setShowModal(false)} onCreated={() => setRefresh(r => r + 1)} />
-    </AdminLayout>
+      <CreateLinkModal open={showModal} onClose={() => setShowModal(false)} onCreated={refresh} />
+    </>
   );
 }

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DOCUMENT_CHECKLIST_ITEMS } from "@/lib/constants";
 
 const personSchema = z.object({
   name: z.string().min(1, "Name is required"),

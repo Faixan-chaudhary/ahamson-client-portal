@@ -1,25 +1,37 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { Shield, Link2, UserCheck, Lock, Mail, RefreshCw, AlertTriangle, Info } from "lucide-react";
+import { Shield, Link2, UserCheck, Lock, Mail, RefreshCw, AlertTriangle, Eye, EyeOff, Check } from "lucide-react";
 import { Logo, PortalWord } from "@/components/portal/Logo";
 import { ParticleNetwork } from "@/components/portal/ParticleNetwork";
 import { GOLD, NAVY } from "@/lib/constants";
+import { login } from "@/lib/api";
+import { setSession } from "@/lib/auth";
 
 export function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("admin@ahamson.com");
   const [password, setPassword] = useState("Admin@2025");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     setLoading(true);
-    setTimeout(() => {
-      if (email) navigate("/admin/dashboard");
-      else { setError("Invalid credentials."); setLoading(false); }
-    }, 600);
+    try {
+      const res = await login(email, password);
+      setSession(res.accessToken, res.user);
+      setSuccess(true);
+      await new Promise<void>(resolve => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      });
+      navigate("/admin/dashboard", { replace: true, state: { fromLogin: true } });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Invalid credentials.");
+      setLoading(false);
+    }
   }
 
   return (
@@ -60,7 +72,7 @@ export function LoginPage() {
               ))}
             </div>
           </div>
-          <p className="text-white/25 text-xs mt-8">&copy; 2025 Ahamson. All rights reserved.</p>
+          <p className="text-white/25 text-xs mt-8">&copy; 2025 AHamson. All rights reserved.</p>
         </div>
       </div>
       <div className="flex-1 flex items-center justify-center bg-[#F4F6FA] px-8">
@@ -86,7 +98,21 @@ export function LoginPage() {
                 </div>
                 <div className="relative">
                   <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
-                  <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full pl-10 pr-4 py-3 rounded-xl border border-[#0B1F3A]/12 bg-[#F8F9FC] text-sm focus:outline-none focus:ring-2 focus:ring-[#F7931E]/30" required />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    className="w-full pl-10 pr-10 py-3 rounded-xl border border-[#0B1F3A]/12 bg-[#F8F9FC] text-sm focus:outline-none focus:ring-2 focus:ring-[#F7931E]/30"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(v => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#64748B] transition-colors"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
               {error && (
@@ -95,14 +121,26 @@ export function LoginPage() {
                   <p className="text-red-600 text-sm">{error}</p>
                 </div>
               )}
-              <button type="submit" disabled={loading} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-white text-sm disabled:opacity-70"
-                style={{ background: `linear-gradient(135deg, ${NAVY}, #162d52)` }}>
-                {loading ? <><RefreshCw className="w-4 h-4 animate-spin" /> Authenticating...</> : <><Shield className="w-4 h-4" /> Sign In</>}
+              <button
+                type="submit"
+                disabled={loading || success}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-white text-sm disabled:opacity-90 transition-all duration-300"
+                style={{
+                  background: success
+                    ? `linear-gradient(135deg, ${GOLD}, #e07d10)`
+                    : `linear-gradient(135deg, ${NAVY}, #162d52)`,
+                  boxShadow: success ? `0 8px 24px ${GOLD}55` : undefined,
+                  transform: success ? "scale(1.02)" : undefined,
+                }}
+              >
+                {success ? (
+                  <><Check className="w-4 h-4" strokeWidth={2.5} /> Welcome!</>
+                ) : loading ? (
+                  <><RefreshCw className="w-4 h-4 animate-spin" /> Authenticating...</>
+                ) : (
+                  <><Shield className="w-4 h-4" /> Sign In</>
+                )}
               </button>
-              <div className="bg-[#F8F9FC] border border-[#0B1F3A]/8 rounded-xl px-4 py-3 flex items-center gap-2">
-                <Info className="w-3.5 h-3.5 text-[#94A3B8]" />
-                <p className="text-[#94A3B8] text-xs">Demo: any email & password works</p>
-              </div>
             </form>
           </div>
         </div>

@@ -153,8 +153,8 @@ temp/
 *.pid.lock
 .tern-port
 
-# =========================
-# Optional: large generated PDFs / uploads (uncomment if needed)
-# =========================
-# uploads/
-# generated-pdfs/
+backend/.env
+backend/ahamson.db
+backend/__pycache__/
+backend/**/__pycache__/
+backend/.venv/

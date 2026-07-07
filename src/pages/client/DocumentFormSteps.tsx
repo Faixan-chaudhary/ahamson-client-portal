@@ -1,5 +1,6 @@
 import type { DocumentFormData } from "@/lib/types";
 import { EMIRATES, LEGAL_STATUSES, DOCUMENT_CHECKLIST_ITEMS } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import { FormField, Input, Textarea } from "@/components/portal/FormField";
 import { SignaturePad } from "@/components/portal/SignaturePad";
 import { FileUpload } from "@/components/portal/FileUpload";
@@ -100,7 +101,7 @@ export function BankReferencesStep({ data, onChange, errors }: StepProps) {
         <div key={i} className="grid grid-cols-2 gap-3 p-3 rounded-xl border border-[#0B1F3A]/10">
           <FormField label="Bank & Branch" required half error={err(errors, `bankReferences.${i}.bankBranch`)}><Input value={r.bankBranch} onChange={v => update(i, "bankBranch", v)} /></FormField>
           <FormField label="IBAN" required half error={err(errors, `bankReferences.${i}.iban`)}><Input value={r.iban} onChange={v => update(i, "iban", v)} /></FormField>
-          {rows.length > 1 && <button onClick={() => onChange({ ...data, bankReferences: rows.filter((_, j) => j !== i) })} className="col-span-2 text-xs text-red-500 flex items-center gap-1"><Trash2 className="w-3 h-3" />Remove row</button>Н
+          {rows.length > 1 && <button onClick={() => onChange({ ...data, bankReferences: rows.filter((_, j) => j !== i) })} className="col-span-2 text-xs text-red-500 flex items-center gap-1"><Trash2 className="w-3 h-3" />Remove row</button>}
         </div>
       ))}
       <Button variant="outline" icon={<Plus className="w-4 h-4" />} onClick={() => onChange({ ...data, bankReferences: [...rows, { bankBranch: "", iban: "" }] })}>Add Row</Button>
@@ -122,7 +123,7 @@ export function TradeCreditStep({ data, onChange, errors }: StepProps) {
           <FormField label="Telephone" required half error={err(errors, `tradeCreditReferences.${i}.telephone`)}><Input value={r.telephone} onChange={v => update(i, "telephone", v)} /></FormField>
           <FormField label="Mobile" required half error={err(errors, `tradeCreditReferences.${i}.mobile`)}><Input value={r.mobile} onChange={v => update(i, "mobile", v)} /></FormField>
           <FormField label="Email" required half error={err(errors, `tradeCreditReferences.${i}.email`)}><Input value={r.email} onChange={v => update(i, "email", v)} type="email" /></FormField>
-          {rows.length > 1 && <button onClick={() => onChange({ ...data, tradeCreditReferences: rows.filter((_, j) => j !== i) })} className="col-span-2 text-xs text-red-500 flex items-center gap-1"><Trash2 className="w-3 h-3" />Remove row</button>Н
+          {rows.length > 1 && <button onClick={() => onChange({ ...data, tradeCreditReferences: rows.filter((_, j) => j !== i) })} className="col-span-2 text-xs text-red-500 flex items-center gap-1"><Trash2 className="w-3 h-3" />Remove row</button>}
         </div>
       ))}
       <Button variant="outline" icon={<Plus className="w-4 h-4" />} onClick={() => onChange({ ...data, tradeCreditReferences: [...rows, { companyName: "", telephone: "", mobile: "", email: "" }] })}>Add Row</Button>
@@ -140,9 +141,7 @@ export function DocumentsStep({ data, onChange, errors }: StepProps) {
         <FileUpload key={d.key} label={d.label} required={d.required}
           fileName={data.documents[d.key]}
           onChange={name => setDoc(d.key, name)}
-          checked={!!data.documents[d.key]}
-          error={err(errors, `documents.${d.key}`)}
-          onCheck={() => {}} />
+          error={err(errors, `documents.${d.key}`)} />
       ))}
     </div>
   );

@@ -27,7 +27,7 @@ export function Logo({ light = false, size = "md" }: { light?: boolean; size?: "
   return (
     <img
       src={LOGO_SRC}
-      alt="Ahamson Client Document Portal"
+      alt="AHamson Client Document Portal"
       className={cn(
         "w-auto max-w-full object-contain object-left",
         !light && "brightness-0 opacity-85",

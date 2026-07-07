@@ -10,11 +10,15 @@ import { getSubmittedDocument, getSubmissionByToken } from "@/lib/storage";
 import { defaultDocumentForm } from "@/lib/document-form-defaults";
 import { fillRegistrationPdfBlob } from "@/lib/fill-registration-pdf";
 import { NAVY, GOLD } from "@/lib/constants";
+import type { DocumentFormData, Submission } from "@/lib/types";
+import { useApiQuery } from "@/hooks/useApiQuery";
 
 export function PreviewPage() {
   const { token } = useParams<{ token: string }>();
-  const data = getSubmittedDocument(token ?? "") ?? defaultDocumentForm();
-  const sub = getSubmissionByToken(token ?? "");
+  const { data: sub, loading: subLoading } = useApiQuery(() => getSubmissionByToken(token ?? ""), [token]);
+  const { data: submitted, loading: docLoading } = useApiQuery(() => getSubmittedDocument(token ?? ""), [token]);
+  const data: DocumentFormData = submitted ?? defaultDocumentForm();
+  const submission = sub as Submission | null;
   const { active: downloaded, trigger: triggerDownloaded } = useActionFeedback();
   const [downloadError, setDownloadError] = useState(false);
 
@@ -25,7 +29,7 @@ export function PreviewPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `Ahamson-Client-Registration-${sub?.id ?? token}.pdf`;
+      a.download = `AHamson-Client-Registration-${submission?.id ?? token}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
       triggerDownloaded();
@@ -33,6 +37,14 @@ export function PreviewPage() {
       setDownloadError(true);
       setTimeout(() => setDownloadError(false), 2500);
     }
+  }
+
+  if (subLoading || docLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#DDE2E8]">
+        <p className="text-[#64748B]">Loading preview…</p>
+      </div>
+    );
   }
 
   return (
@@ -67,8 +79,8 @@ export function PreviewPage() {
             </div>
             <h1 className="font-['Playfair_Display'] text-2xl font-bold text-[#0B1F3A]">Your document has been submitted successfully.</h1>
             <p className="text-[#64748B] text-sm mt-2">
-              {sub?.clientCompany && <>Submitted for <strong>{sub.clientCompany}</strong></>}
-              {sub?.submittedAt && <> · {new Date(sub.submittedAt).toLocaleString("en-GB")}</>}
+              {submission?.clientCompany && <>Submitted for <strong>{submission.clientCompany}</strong></>}
+              {submission?.submittedAt && <> · {new Date(submission.submittedAt).toLocaleString("en-GB")}</>}
             </p>
           </div>
         </div>

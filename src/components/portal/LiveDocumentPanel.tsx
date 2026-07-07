@@ -79,7 +79,7 @@ export function LiveDocumentPanel({ data, activeSection, floating }: LiveDocumen
   }
 
   return (
-    <div className="hidden xl:flex flex-col sticky top-24 h-[calc(100vh-120px)] bg-white rounded-2xl border border-[#0B1F3A]/10 shadow-xl p-4 min-h-0">
+    <div className="hidden xl:flex flex-col sticky top-24 h-[calc(100vh-120px)] bg-white rounded-2xl border border-[#0B1F3A]/10 shadow-xl p-3 lg:p-4 min-h-0 min-w-0 w-full">
       {panel}
     </div>
   );

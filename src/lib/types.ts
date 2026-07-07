@@ -80,14 +80,13 @@ export interface Submission {
   submittedAt?: string;
   openedAt?: string;
   formData?: DocumentFormData;
+  approval?: InternalApproval;
 }
 
 export interface CreateLinkInput {
   clientCompany: string;
   contactPerson: string;
   contactEmail: string;
-  phone?: string;
-  internalNotes?: string;
 }
 
 export interface InternalApproval {

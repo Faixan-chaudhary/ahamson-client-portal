@@ -17,7 +17,7 @@ export function ExpiredPage() {
             </div>
             <h2 className="font-['Playfair_Display'] text-2xl font-bold text-[#0B1F3A] mb-2">Link Expired</h2>
             <p className="text-[#64748B] text-sm leading-relaxed mb-6">
-              This secure document link has expired and is no longer valid. Please contact your Ahamson representative to request a new link.
+              This secure document link has expired and is no longer valid. Please contact your AHamson representative to request a new link.
             </p>
             <div className="bg-[#F8F9FC] rounded-xl p-4 text-xs text-[#94A3B8] flex items-center gap-2 justify-center">
               <RefreshCw className="w-3.5 h-3.5" />

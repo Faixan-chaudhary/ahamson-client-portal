@@ -218,7 +218,7 @@ function Page1({ data, companyName, activeSection }: { data: DocumentFormData; c
         <div className={cn("border border-black/70 p-2 mt-0 text-[6px] sm:text-[7px] leading-relaxed text-[#333] transition-all duration-500", filled(7) && "ring-2 ring-[#F7931E]/50")}>
           <p className="italic mb-1"><strong>I/WE believe and undertake;</strong> our firm is financially sound and capable of meeting all obligations. We agree to the following terms:</p>
           <ol className="list-decimal list-inside space-y-0.5 text-[6px]">
-            <li>All services are subject to Ahamson standard terms and conditions.</li>
+            <li>All services are subject to AHamson standard terms and conditions.</li>
             <li>Payment terms as agreed upon credit approval.</li>
             <li>Credit limit and period subject to management approval.</li>
             <li>Information provided is true and complete to the best of our knowledge.</li>

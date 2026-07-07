@@ -17,6 +17,7 @@ interface PdfFormPreviewProps {
   pageNumber?: number;
   className?: string;
   showAllPages?: boolean;
+  maxWidth?: number;
 }
 
 export function computeFormProgress(data: DocumentFormData): number {
@@ -32,7 +33,7 @@ export function computeFormProgress(data: DocumentFormData): number {
   return Math.min(100, Math.round(((filled + sigs + docs + (data.declarationSignature ? 1 : 0)) / total) * 100));
 }
 
-export function PdfFormPreview({ data, pageNumber = 1, className, showAllPages = false }: PdfFormPreviewProps) {
+export function PdfFormPreview({ data, pageNumber = 1, className, showAllPages = false, maxWidth = 620 }: PdfFormPreviewProps) {
   const [pdfData, setPdfData] = useState<Uint8Array | null>(null);
   const [error, setError] = useState(false);
   const [numPages, setNumPages] = useState(2);
@@ -69,21 +70,27 @@ export function PdfFormPreview({ data, pageNumber = 1, className, showAllPages =
     preloadPdfTemplate();
   }, []);
 
+  const pdfFile = useMemo(
+    () => (pdfData ? { data: pdfData } : null),
+    [pdfData],
+  );
+
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
     const ro = new ResizeObserver(([entry]) => {
-      setWidth(Math.min(entry.contentRect.width - 8, 620));
+      const next = Math.max(280, Math.min(Math.round(entry.contentRect.width - 8), maxWidth));
+      setWidth(w => (Math.abs(w - next) > 4 ? next : w));
     });
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [maxWidth]);
 
   useEffect(() => {
     clearTimeout(debounceRef.current);
     if (pdfData) setIsSyncing(true);
 
-    const delay = hasRenderedRef.current ? 600 : 150;
+    const delay = hasRenderedRef.current ? 800 : 100;
     debounceRef.current = setTimeout(() => {
       const genId = ++genIdRef.current;
       generate(dataRef.current, genId);
@@ -96,7 +103,7 @@ export function PdfFormPreview({ data, pageNumber = 1, className, showAllPages =
   const pages = showAllPages ? Array.from({ length: numPages }, (_, i) => i + 1) : [pageNumber];
 
   return (
-    <div ref={containerRef} className={cn("relative", className)}>
+    <div ref={containerRef} className={cn("relative w-full min-h-[320px]", className)}>
       {isSyncing && pdfData && (
         <div className="absolute top-0 left-0 right-0 z-20 h-0.5 overflow-hidden rounded-full">
           <div className="h-full bg-[#F7931E] animate-[shimmer_1s_ease-in-out_infinite] w-full origin-left scale-x-[0.3]" />
@@ -114,13 +121,13 @@ export function PdfFormPreview({ data, pageNumber = 1, className, showAllPages =
 
       {error && !pdfData ? (
         <div className="p-8 text-center text-sm text-red-500">Could not load PDF preview</div>
-      ) : pdfData ? (
-        <div className={cn("transition-opacity duration-300", isSyncing ? "opacity-90" : "opacity-100")}>
+      ) : pdfFile ? (
+        <div>
           <Document
-            file={{ data: pdfData.slice() }}
+            file={pdfFile}
             onLoadSuccess={({ numPages: n }) => setNumPages(n)}
             loading={null}
-            className="flex flex-col items-center gap-4"
+            className="flex flex-col items-center gap-4 w-full"
           >
             {pages.map(p => (
               <Page

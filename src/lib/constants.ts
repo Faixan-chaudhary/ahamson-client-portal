@@ -1,5 +1,5 @@
 export const NAVY = "#0B1F3A";
-/** Brand gold sampled from Ahamson logo (A accent + icon spiral) */
+/** Brand gold sampled from AHamson logo (A accent + icon spiral) */
 export const GOLD = "#F7931E";
 export const GOLD_DARK = "#D9811A";
 export const GOLD_DARKER = "#BB6F17";

@@ -2,17 +2,18 @@ import type { DocumentFormData } from "./types";
 import { DOCUMENT_CHECKLIST_ITEMS } from "./constants";
 
 /** Maps app form data → AcroForm field names in Client Registration Form BTS v1.pdf */
+/** PDF checkboxes are ordered top-to-bottom on page 1 (Check Box1 = first checklist row). */
 export const CHECKBOX_MAP: Record<string, string> = {
-  tradeLicense: "Check Box2",
-  chamberOfCommerce: "Check Box3",
-  memorandum: "Check Box4",
-  ownerEmiratesId: "Check Box5",
-  ownerPassport: "Check Box6",
-  signatoryEmiratesId: "Check Box7",
-  signatoryPassport: "Check Box8",
-  attestedSignature: "Check Box9",
-  securityCheque: "Check Box10",
-  advanceCheque: "Check Box1",
+  tradeLicense: "Check Box1",
+  chamberOfCommerce: "Check Box2",
+  memorandum: "Check Box3",
+  ownerEmiratesId: "Check Box4",
+  ownerPassport: "Check Box5",
+  signatoryEmiratesId: "Check Box6",
+  signatoryPassport: "Check Box7",
+  attestedSignature: "Check Box8",
+  securityCheque: "Check Box9",
+  advanceCheque: "Check Box10",
   bankStatement: "Check Box11",
 };
 

@@ -9,6 +9,7 @@ import { Modal } from "@/components/portal/Modal";
 import { NAVY, GOLD } from "@/lib/constants";
 import { defaultDocumentForm } from "@/lib/document-form-defaults";
 import type { DocumentFormData } from "@/lib/types";
+import type { Submission } from "@/lib/types";
 import { getSubmissionByToken, getDraft, saveDraft, submitDocument, markSubmissionOpened, isLinkExpired } from "@/lib/storage";
 import { STEP_SCHEMAS } from "@/schemas/document-form";
 import {
@@ -43,9 +44,10 @@ const STEP_TITLES = [
 export function DocumentFormPage() {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
-  const submission = getSubmissionByToken(token ?? "");
+  const [submission, setSubmission] = useState<Submission | null>(null);
+  const [loading, setLoading] = useState(true);
   const [step, setStep] = useState(1);
-  const [form, setForm] = useState<DocumentFormData>(() => getDraft(token ?? "") ?? defaultDocumentForm());
+  const [form, setForm] = useState<DocumentFormData>(defaultDocumentForm());
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showConfirm, setShowConfirm] = useState(false);
   const { active: draftSaved, trigger: triggerDraftSaved } = useActionFeedback();
@@ -53,11 +55,31 @@ export function DocumentFormPage() {
   useEffect(() => {
     if (!token) return;
     if (token === "expired-demo") { navigate("/client/expired"); return; }
-    if (!submission) return;
-    if (isLinkExpired(token) || submission.status === "expired") { navigate("/client/expired"); return; }
-    if (submission.status === "submitted") { navigate(`/client/preview/${token}`); return; }
-    markSubmissionOpened(token);
-  }, [token, submission, navigate]);
+    let alive = true;
+    setLoading(true);
+    (async () => {
+      const sub = await getSubmissionByToken(token);
+      if (!alive) return;
+      if (!sub) { setSubmission(null); setLoading(false); return; }
+      if (isLinkExpired(sub) || sub.status === "expired") { navigate("/client/expired"); return; }
+      if (sub.status === "submitted") { navigate(`/client/preview/${token}`); return; }
+      const draft = await getDraft(token);
+      if (!alive) return;
+      setSubmission(sub);
+      setForm(draft ?? defaultDocumentForm());
+      setLoading(false);
+      await markSubmissionOpened(token);
+    })();
+    return () => { alive = false; };
+  }, [token, navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F4F6FA]">
+        <p className="text-[#64748B]">Loading document…</p>
+      </div>
+    );
+  }
 
   if (!submission) {
     return (
@@ -87,9 +109,15 @@ export function DocumentFormPage() {
 
   function prev() { setStep(s => Math.max(s - 1, 1)); }
 
-  function handleSaveDraft() {
-    saveDraft(token!, form);
-    triggerDraftSaved();
+  async function handleSaveDraft() {
+    try {
+      await saveDraft(token!, form);
+      triggerDraftSaved();
+    } catch (err) {
+      if (err instanceof Error && err.message.toLowerCase().includes("submitted")) {
+        navigate(`/client/preview/${token}`);
+      }
+    }
   }
 
   function handleSubmit() {
@@ -97,10 +125,17 @@ export function DocumentFormPage() {
     setShowConfirm(true);
   }
 
-  function confirmSubmit() {
-    submitDocument(token!, form);
-    setShowConfirm(false);
-    navigate(`/client/preview/${token}`);
+  async function confirmSubmit() {
+    try {
+      await submitDocument(token!, form);
+      setShowConfirm(false);
+      navigate(`/client/preview/${token}`);
+    } catch (err) {
+      if (err instanceof Error && err.message.toLowerCase().includes("submitted")) {
+        setShowConfirm(false);
+        navigate(`/client/preview/${token}`);
+      }
+    }
   }
 
   const pct = ((step - 1) / (STEPS.length - 1)) * 100;
@@ -108,23 +143,23 @@ export function DocumentFormPage() {
   return (
     <div className="min-h-screen bg-[#F4F6FA] font-['Inter']">
       <header className="sticky top-0 z-30 border-b border-white/10" style={{ background: `linear-gradient(135deg, ${NAVY}, #162d52)` }}>
-        <div className="px-6 py-3 flex items-center justify-between max-w-[1600px] mx-auto flex-wrap gap-3">
+        <div className="w-full px-3 sm:px-4 lg:px-5 py-3 flex items-center justify-between flex-wrap gap-3">
           <Logo light />
           <CountdownTimer expiresAt={submission.expiresAt} onExpired={() => navigate("/client/expired")} />
         </div>
         <div className="h-0.5 bg-white/10"><div className="h-full bg-[#F7931E] transition-all duration-500" style={{ width: `${pct}%` }} /></div>
       </header>
 
-      <div className="max-w-[1600px] mx-auto py-5 px-4">
+      <div className="w-full py-4 sm:py-5 px-3 sm:px-4 lg:px-5">
         <div className="text-center mb-4 xl:text-left">
           <p className="text-[#94A3B8] text-[10px] uppercase tracking-widest font-bold">Client Registration Form</p>
           <h1 className="font-display text-xl font-bold text-[#0B1F3A] leading-snug">
-            Ahamson Document <PortalWord className="text-[1.06em]" />
+            AHamson Document <PortalWord className="text-[1.06em]" />
           </h1>
         </div>
 
-        <div className="grid xl:grid-cols-2 gap-5 items-start">
-          <div>
+        <div className="grid xl:grid-cols-2 gap-4 xl:gap-5 items-start w-full">
+          <div className="min-w-0 w-full">
             <Stepper steps={STEPS} current={step} />
 
             <div className="bg-white rounded-2xl border border-[#0B1F3A]/8 shadow-xl overflow-hidden">
@@ -179,7 +214,7 @@ export function DocumentFormPage() {
 
         <LiveDocumentPanelMobile data={form} companyName={submission.clientCompany} activeSection={step} />
 
-        <p className="text-center text-[#94A3B8] text-xs mt-4">No login required · Secure encrypted submission · Ahamson &copy; 2025</p>
+        <p className="text-center text-[#94A3B8] text-xs mt-4">No login required · Secure encrypted submission · AHamson &copy; 2025</p>
       </div>
 
       <Modal open={showConfirm} onClose={() => setShowConfirm(false)} wide title="Review Your Document" subtitle="Official Client Registration Form — filled with your data">

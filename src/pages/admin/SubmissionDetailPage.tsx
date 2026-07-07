@@ -1,37 +1,56 @@
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { ChevronLeft, Download, Printer, Link2, Eye, FileText, CheckCircle, Check } from "lucide-react";
-import { AdminLayout } from "@/components/portal/AdminLayout";
 import { PdfFormPreview } from "@/components/portal/PdfFormPreview";
 import { StatusBadge } from "@/components/portal/StatusBadge";
 import { Button } from "@/components/portal/Button";
 import { FormField, Input } from "@/components/portal/FormField";
 import { Card, CardHeader } from "@/components/portal/Card";
-import { getSubmissionById } from "@/lib/storage";
+import { getSubmissionById, saveInternalApproval } from "@/lib/storage";
 import { formatDateTime } from "@/lib/utils";
 import { NAVY, GOLD } from "@/lib/constants";
 import { useActionFeedback } from "@/hooks/useActionFeedback";
 import { defaultDocumentForm } from "@/lib/document-form-defaults";
-import { useState } from "react";
+import type { InternalApproval } from "@/lib/types";
+import { useApiQuery } from "@/hooks/useApiQuery";
+
+const emptyApproval = (): InternalApproval => ({
+  salesName: "",
+  salesSrNo: "",
+  salesAdminName: "",
+  businessUnitManager: "",
+  accountantName: "",
+  financeManager: "",
+  documentController: "",
+  approvedCreditDays: "",
+  creditLimit: "",
+  approvedByGM: "",
+  gmSignatureDate: "",
+});
 
 export function SubmissionDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const sub = getSubmissionById(id ?? "");
-  const [approval, setApproval] = useState({
-    salesName: "", salesSrNo: "", salesAdminName: "", businessUnitManager: "",
-    accountantName: "", financeManager: "", documentController: "",
-    approvedCreditDays: "", creditLimit: "", approvedByGM: "", gmSignatureDate: "",
-  });
+  const { data: sub, loading } = useApiQuery(() => getSubmissionById(id ?? ""), [id]);
+  const [approval, setApproval] = useState<InternalApproval>(emptyApproval());
   const { active: approvalSaved, trigger: triggerApprovalSaved } = useActionFeedback();
+
+  useEffect(() => {
+    if (sub?.approval) setApproval(sub.approval);
+  }, [sub]);
+
+  if (loading) {
+    return (
+      <div className="p-8 text-center text-[#94A3B8]">Loading submission…</div>
+    );
+  }
 
   if (!sub) {
     return (
-      <AdminLayout>
-        <div className="p-8 text-center">
-          <p className="text-[#64748B]">Submission not found.</p>
-          <Button className="mt-4" onClick={() => navigate("/admin/dashboard")}>Back to Dashboard</Button>
-        </div>
-      </AdminLayout>
+      <div className="p-8 text-center">
+        <p className="text-[#64748B]">Submission not found.</p>
+        <Button className="mt-4" onClick={() => navigate("/admin/dashboard")}>Back to Dashboard</Button>
+      </div>
     );
   }
 
@@ -43,8 +62,14 @@ export function SubmissionDetailPage() {
     { icon: CheckCircle, label: "PDF Generated", time: sub.submittedAt, done: sub.status === "submitted" },
   ];
 
+  async function handleSaveApproval() {
+    if (!id) return;
+    await saveInternalApproval(id, approval);
+    triggerApprovalSaved();
+  }
+
   return (
-    <AdminLayout>
+    <>
       <header className="bg-white/80 backdrop-blur-sm border-b border-[#0B1F3A]/8 px-6 lg:px-8 py-4 flex items-center justify-between sticky top-0 z-20 flex-wrap gap-3 shadow-[0_1px_3px_rgba(11,31,58,0.04)]">
         <div className="flex items-center gap-2">
           <button onClick={() => navigate("/admin/dashboard")} className="flex items-center gap-1.5 text-[#64748B] hover:text-[#0B1F3A] text-sm font-medium">
@@ -61,7 +86,6 @@ export function SubmissionDetailPage() {
       </header>
 
       <div className="p-6 lg:p-8 space-y-6 max-w-6xl">
-        {/* Hero */}
         <div className="rounded-2xl overflow-hidden shadow-lg">
           <div className="px-7 py-6 flex flex-wrap items-center justify-between gap-4" style={{ background: `linear-gradient(135deg, ${NAVY}, #162d52)` }}>
             <div>
@@ -72,7 +96,6 @@ export function SubmissionDetailPage() {
           </div>
         </div>
 
-        {/* Timeline */}
         <Card className="p-6">
           <h3 className="font-['Playfair_Display'] font-bold text-[#0B1F3A] mb-5">Activity Timeline</h3>
           <div className="flex flex-col sm:flex-row gap-4">
@@ -91,7 +114,6 @@ export function SubmissionDetailPage() {
           </div>
         </Card>
 
-        {/* Form Preview */}
         {sub.status === "submitted" ? (
           <div className="bg-[#DDE2E8] p-4 rounded-2xl">
             <PdfFormPreview data={formData} showAllPages />
@@ -105,26 +127,6 @@ export function SubmissionDetailPage() {
           </Card>
         )}
 
-        {/* Attachments placeholder */}
-        <Card>
-          <CardHeader title="Uploaded Attachments" subtitle="Mock file names only" />
-          <div className="p-5 grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {["trade_license.pdf", "emirates_id.pdf", "bank_statement.pdf"].map(f => (
-              <div key={f} className="flex items-center gap-2 p-3 rounded-xl bg-[#F8F9FC] border border-[#0B1F3A]/8 text-xs text-[#64748B]">
-                <FileText className="w-4 h-4 text-[#F7931E]" />{f}
-              </div>
-            ))}
-          </div>
-        </Card>
-
-        {/* PDF Preview placeholder */}
-        <Card className="p-8">
-          <div className="border-2 border-dashed border-[#0B1F3A]/12 rounded-2xl h-48 flex items-center justify-center bg-[#F8F9FC]">
-            <p className="text-[#94A3B8] text-sm">PDF Preview Placeholder</p>
-          </div>
-        </Card>
-
-        {/* Internal Approval Section */}
         <Card>
           <CardHeader title="Internal Approval" subtitle="For office use only — Page 2" />
           <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -144,7 +146,7 @@ export function SubmissionDetailPage() {
           <div className="px-6 pb-6">
             <Button
               variant="gold"
-              onClick={triggerApprovalSaved}
+              onClick={handleSaveApproval}
               className={approvalSaved ? "!from-emerald-500 !to-emerald-600" : undefined}
               icon={approvalSaved ? <Check className="w-4 h-4" strokeWidth={2.5} /> : undefined}
             >
@@ -153,6 +155,6 @@ export function SubmissionDetailPage() {
           </div>
         </Card>
       </div>
-    </AdminLayout>
+    </>
   );
 }

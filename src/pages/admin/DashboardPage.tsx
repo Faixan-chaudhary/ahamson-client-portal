@@ -1,42 +1,28 @@
-import { useState, useMemo } from "react";
-import { Link2, Clock, Eye, FileText, Timer, FilePlus, Bell } from "lucide-react";
-import { AdminLayout } from "@/components/portal/AdminLayout";
+import { useState } from "react";
+import { Link2, Clock, Eye, FileText, Timer, FilePlus } from "lucide-react";
 import { PageHeader, PortalWord } from "@/components/portal/Logo";
 import { KpiCard } from "@/components/portal/KpiCard";
 import { SubmissionsTable } from "@/components/portal/SubmissionsTable";
 import { CreateLinkModal } from "@/components/portal/CreateLinkModal";
 import { Button } from "@/components/portal/Button";
-import { getSubmissions } from "@/lib/storage";
-import { GOLD, NAVY } from "@/lib/constants";
+import { getDashboard } from "@/lib/storage";
+import { useApiQuery } from "@/hooks/useApiQuery";
+import { NAVY } from "@/lib/constants";
 
 export function DashboardPage() {
   const [showModal, setShowModal] = useState(false);
-  const [refresh, setRefresh] = useState(0);
-  const submissions = useMemo(() => getSubmissions(), [refresh]);
-
-  const kpis = {
-    total: submissions.length,
-    pending: submissions.filter(s => s.status === "pending").length,
-    opened: submissions.filter(s => s.status === "opened").length,
-    submitted: submissions.filter(s => s.status === "submitted").length,
-    expired: submissions.filter(s => s.status === "expired").length,
-  };
+  const { data, loading, refresh } = useApiQuery(() => getDashboard(), []);
+  const kpis = data?.stats ?? { total: 0, pending: 0, opened: 0, submitted: 0, expired: 0 };
 
   return (
-    <AdminLayout>
+    <>
       <PageHeader
         title="Dashboard"
-        subtitle={<>Ahamson Client Document <PortalWord className="text-[1.05em]" /> · Overview</>}
+        subtitle={<>AHamson Client Document <PortalWord className="text-[1.05em]" /> · Overview</>}
       >
-        <div className="flex items-center gap-3 flex-wrap">
-          <button className="relative w-9 h-9 rounded-xl bg-[#F4F6FA] border border-[#0B1F3A]/8 flex items-center justify-center">
-            <Bell className="w-4 h-4 text-[#64748B]" />
-            <span className="absolute top-2 right-2 w-2 h-2 rounded-full border-2 border-white" style={{ background: GOLD }} />
-          </button>
-          <Button variant="gold" icon={<FilePlus className="w-4 h-4" />} onClick={() => setShowModal(true)}>
-            Create Secure Document Link
-          </Button>
-        </div>
+        <Button variant="gold" icon={<FilePlus className="w-4 h-4" />} onClick={() => setShowModal(true)}>
+          Create Secure Document Link
+        </Button>
       </PageHeader>
 
       <div className="p-6 lg:p-8 w-full space-y-6">
@@ -48,10 +34,14 @@ export function DashboardPage() {
           <KpiCard label="Expired Links" value={kpis.expired} sub="No longer valid" icon={Timer} accent="#EF4444" trend="neutral" />
         </div>
 
-        <SubmissionsTable submissions={submissions} />
+        {loading ? (
+          <div className="bg-white rounded-2xl border border-[#0B1F3A]/8 p-12 text-center text-[#94A3B8] text-sm">Loading submissions…</div>
+        ) : (
+          <SubmissionsTable submissions={data?.submissions ?? []} />
+        )}
       </div>
 
-      <CreateLinkModal open={showModal} onClose={() => setShowModal(false)} onCreated={() => setRefresh(r => r + 1)} />
-    </AdminLayout>
+      <CreateLinkModal open={showModal} onClose={() => setShowModal(false)} onCreated={refresh} />
+    </>
   );
 }
