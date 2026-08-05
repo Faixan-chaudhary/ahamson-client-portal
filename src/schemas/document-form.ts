@@ -60,15 +60,17 @@ export const tradeCreditSchema = z.object({
 });
 
 export const documentsSchema = z.object({
-  documents: z.record(z.string().nullable()).refine(
-    (doc) => {
-      for (const item of DOCUMENT_CHECKLIST_ITEMS) {
-        if (item.required && !doc[item.key]) return false;
-      }
-      return true;
-    },
-    { message: "All required documents must be uploaded", path: ["documents"] }
-  ),
+  documents: z.record(z.string().nullable()),
+}).superRefine((data, ctx) => {
+  for (const item of DOCUMENT_CHECKLIST_ITEMS) {
+    if (item.required && !data.documents[item.key]) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `${item.label} is required`,
+        path: ["documents", item.key],
+      });
+    }
+  }
 });
 
 export const declarationSchema = z.object({

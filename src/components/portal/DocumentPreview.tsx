@@ -2,6 +2,7 @@ import { Building2, User, PenLine, CreditCard, FileText, Shield } from "lucide-r
 import type { DocumentFormData } from "@/lib/types";
 import { DOCUMENT_CHECKLIST_ITEMS } from "@/lib/constants";
 import { Card, CardHeader, PreviewRow } from "./Card";
+import { CompanyStampPreview } from "./CompanyStampPreview";
 
 export function DocumentPreview({ data }: { data: DocumentFormData }) {
   return (
@@ -113,9 +114,7 @@ export function DocumentPreview({ data }: { data: DocumentFormData }) {
         {data.companyStamp && (
           <div className="px-5 py-4">
             <p className="text-xs text-[#94A3B8] mb-2">Company Stamp</p>
-            <div className="w-24 h-24 rounded-full border-2 border-dashed border-[#F7931E]/40 flex items-center justify-center text-xs text-[#94A3B8] bg-[#F8F9FC]">
-              {data.companyStamp}
-            </div>
+            <CompanyStampPreview src={data.companyStamp} size="md" />
           </div>
         )}
       </Card>

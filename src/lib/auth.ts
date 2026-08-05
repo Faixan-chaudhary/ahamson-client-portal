@@ -29,3 +29,13 @@ export function clearSession() {
 export function isAuthenticated(): boolean {
   return !!getToken();
 }
+
+export function isAdmin(): boolean {
+  return getStoredUser()?.role === "admin";
+}
+
+export function roleLabel(role?: string): string {
+  if (role === "admin") return "Administrator";
+  if (role === "manager") return "Manager";
+  return "User";
+}

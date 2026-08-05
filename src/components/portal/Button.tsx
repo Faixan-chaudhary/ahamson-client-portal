@@ -26,7 +26,7 @@ export function Button({ variant = "primary", icon, className, children, style, 
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border transition-all disabled:opacity-50 disabled:cursor-not-allowed",
+        "inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold border transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed",
         variants[variant],
         className,
       )}

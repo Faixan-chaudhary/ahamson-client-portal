@@ -63,11 +63,13 @@ function makeParticle(x: number, y: number): Particle {
 
 /** Full-panel grid + corner/edge anchors so no empty corners. */
 function createEvenParticles(w: number, h: number, count: number): Particle[] {
+  if (w < 16 || h < 16 || count <= 0) return [];
+
   const pad = 12;
-  const usableW = w - pad * 2;
-  const usableH = h - pad * 2;
-  const cols = Math.ceil(Math.sqrt(count * (w / Math.max(h, 1))));
-  const rows = Math.ceil(count / cols);
+  const usableW = Math.max(1, w - pad * 2);
+  const usableH = Math.max(1, h - pad * 2);
+  const cols = Math.max(1, Math.ceil(Math.sqrt(count * (w / Math.max(h, 1)))));
+  const rows = Math.max(1, Math.ceil(count / cols));
   const cellW = usableW / cols;
   const cellH = usableH / rows;
   const out: Particle[] = [];
@@ -415,6 +417,12 @@ export function ParticleNetwork({ className }: { className?: string }) {
     }
 
     function initParticles() {
+      if (width < 16 || height < 16) {
+        particles = [];
+        initialized = false;
+        return;
+      }
+
       const count = Math.min(62, Math.max(32, Math.floor((width * height) / 12500)));
       particles = createEvenParticles(width, height, count);
       initialized = true;
@@ -437,6 +445,11 @@ export function ParticleNetwork({ className }: { className?: string }) {
 
     function step() {
       time += 1;
+
+      if (width < 16 || height < 16 || particles.length === 0) {
+        frameRef.current = requestAnimationFrame(step);
+        return;
+      }
 
       mouseSpeed += (Math.hypot(targetMouseX - lastMouseX, targetMouseY - lastMouseY) - mouseSpeed) * 0.35;
       lastMouseX = targetMouseX;

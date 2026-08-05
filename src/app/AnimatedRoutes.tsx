@@ -2,16 +2,24 @@ import { useEffect, useState } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { LoginPage } from "@/pages/admin/LoginPage";
+import { ForgotPasswordPage } from "@/pages/admin/ForgotPasswordPage";
+import { ResetPasswordPage } from "@/pages/admin/ResetPasswordPage";
 import { DashboardPage } from "@/pages/admin/DashboardPage";
-import { SubmissionsPage } from "@/pages/admin/SubmissionsPage";
+import { DealRegistrationPage } from "@/pages/admin/DealRegistrationPage";
+import { DealDetailPage } from "@/pages/admin/DealDetailPage";
+import { DealLinksPage } from "@/pages/admin/DealLinksPage";
+import { PipelinePage } from "@/pages/admin/PipelinePage";
+import { UsersPage } from "@/pages/admin/UsersPage";
 import { LinksPage } from "@/pages/admin/LinksPage";
 import { SubmissionDetailPage } from "@/pages/admin/SubmissionDetailPage";
 import { DocumentFormPage } from "@/pages/client/DocumentFormPage";
+import { ClientDealFormPage } from "@/pages/client/ClientDealFormPage";
 import { PreviewPage } from "@/pages/client/PreviewPage";
 import { ExpiredPage } from "@/pages/client/ExpiredPage";
 import { ProtectedRoute } from "@/components/portal/ProtectedRoute";
 import { AdminLayout } from "@/components/portal/AdminLayout";
 import { GOLD } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 
 const slideEase = [0.4, 0, 0.2, 1] as const;
 const slideTransition = { type: "tween" as const, duration: 0.58, ease: slideEase };
@@ -23,7 +31,11 @@ const gpu = {
 };
 
 function routeKey(pathname: string) {
-  if (pathname === "/admin/login") return "login";
+  if (
+    pathname === "/admin/login"
+    || pathname.startsWith("/admin/forgot-password")
+    || pathname.startsWith("/admin/reset-password")
+  ) return "login";
   if (pathname.startsWith("/admin")) return "admin";
   return pathname;
 }
@@ -35,6 +47,7 @@ export function AnimatedRoutes() {
   const fromLogin = (location.state as { fromLogin?: boolean } | null)?.fromLogin === true;
   const [sweep, setSweep] = useState(0);
 
+  const isClientRoute = location.pathname.startsWith("/client/");
   const isAuthEnter = fromLogin && key === "admin";
   const isAuthSlide = isAuthEnter || key === "login";
   const transition = reducedMotion ? { duration: 0.01 } : isAuthSlide ? slideTransition : { duration: 0.25, ease: slideEase };
@@ -44,7 +57,10 @@ export function AnimatedRoutes() {
   }, [isAuthEnter]);
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden bg-[#06142A]">
+    <div className={cn(
+      "relative h-screen w-screen bg-[#06142A]",
+      isClientRoute ? "overflow-y-auto overflow-x-hidden scrollbar-thin" : "overflow-hidden",
+    )}>
       <AnimatePresence initial={false}>
         <motion.div
           key={key}
@@ -64,20 +80,30 @@ export function AnimatedRoutes() {
                 : { opacity: 0 }
           }
           transition={transition}
-          className="absolute inset-0 h-full w-full overflow-hidden"
+          className={cn(
+            "absolute inset-0 h-full w-full",
+            isClientRoute ? "overflow-y-auto overflow-x-hidden scrollbar-thin" : "overflow-hidden",
+          )}
           style={gpu}
         >
           <Routes location={location}>
             <Route path="/" element={<Navigate to="/admin/login" replace />} />
             <Route path="/admin/login" element={<LoginPage />} />
+            <Route path="/admin/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/admin/reset-password" element={<ResetPasswordPage />} />
             <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
               <Route index element={<Navigate to="dashboard" replace />} />
               <Route path="dashboard" element={<DashboardPage />} />
-              <Route path="submissions" element={<SubmissionsPage />} />
+              <Route path="pipeline" element={<PipelinePage />} />
+              <Route path="deal-registration" element={<DealRegistrationPage />} />
+              <Route path="deal-links" element={<DealLinksPage />} />
+              <Route path="deals/:id" element={<DealDetailPage />} />
+              <Route path="users" element={<UsersPage />} />
               <Route path="submissions/:id" element={<SubmissionDetailPage />} />
               <Route path="links" element={<LinksPage />} />
             </Route>
             <Route path="/client/document/:token" element={<DocumentFormPage />} />
+            <Route path="/client/deal/:token" element={<ClientDealFormPage />} />
             <Route path="/client/preview/:token" element={<PreviewPage />} />
             <Route path="/client/expired" element={<ExpiredPage />} />
             <Route path="*" element={<Navigate to="/admin/login" replace />} />

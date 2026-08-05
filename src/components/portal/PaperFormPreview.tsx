@@ -3,6 +3,7 @@ import { Shield } from "lucide-react";
 import type { DocumentFormData } from "@/lib/types";
 import { DOCUMENT_CHECKLIST_ITEMS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { CompanyStampPreview } from "./CompanyStampPreview";
 
 const ORANGE = "#C8872E";
 const FIELD_BG = "#E4EAF0";
@@ -240,13 +241,11 @@ function Page1({ data, companyName, activeSection }: { data: DocumentFormData; c
           </div>
           <div className="col-span-4 border border-black/70 flex flex-col">
             <div className="px-1 py-0.5 text-[7px] font-bold text-white text-center" style={{ background: ORANGE }}>COMPANY STAMP</div>
-            <div className="flex-1 min-h-[50px] flex items-center justify-center p-2" style={{ background: FIELD_BG }}>
+            <div className="flex-1 min-h-[56px] flex items-center justify-center p-1.5 overflow-hidden" style={{ background: FIELD_BG }}>
               {data.companyStamp ? (
-                <div className="w-14 h-14 rounded-full border-2 border-dashed border-red-400 flex items-center justify-center text-[6px] text-red-500 text-center font-bold rotate-[-8deg]">
-                  {data.companyStamp}
-                </div>
+                <CompanyStampPreview src={data.companyStamp} size="sm" className="max-h-full" />
               ) : (
-                <span className="text-[7px] text-red-400 font-bold border-2 border-dashed border-red-300 px-3 py-4">STAMP</span>
+                <span className="text-[7px] text-red-400 font-bold border-2 border-dashed border-red-300 px-3 py-4 rounded-full">STAMP</span>
               )}
             </div>
           </div>

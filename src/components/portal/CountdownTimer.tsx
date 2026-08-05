@@ -28,10 +28,15 @@ export function CountdownTimer({ expiresAt, onExpired }: CountdownTimerProps) {
   const isLow = seconds < 600;
 
   return (
-    <div className={cn("flex items-center gap-2.5 px-4 py-2 rounded-full border text-sm font-semibold",
-      isLow ? "border-red-400/40 bg-red-500/15 text-red-300" : "border-[#F7931E]/30 bg-[#F7931E]/15 text-[#F7931E]")}>
-      <Timer className="w-4 h-4" />
-      <span>Link expires in <span className="font-['JetBrains_Mono']">{hh}:{mm}:{ss}</span></span>
+    <div className={cn(
+      "flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-full border text-xs sm:text-sm font-semibold",
+      isLow ? "border-red-400/40 bg-red-500/15 text-red-300" : "border-[#F7931E]/30 bg-[#F7931E]/15 text-[#F7931E]",
+    )}>
+      <Timer className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+      <span className="whitespace-nowrap">
+        <span className="hidden sm:inline">Link expires in </span>
+        <span className="font-['JetBrains_Mono'] tabular-nums">{hh}:{mm}:{ss}</span>
+      </span>
     </div>
   );
 }

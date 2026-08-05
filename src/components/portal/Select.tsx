@@ -1,15 +1,10 @@
-import * as RadixSelect from "@radix-ui/react-select";
 import { Check, ChevronDown } from "lucide-react";
+import * as RadixSelect from "@radix-ui/react-select";
 import { cn } from "@/lib/utils";
-
-const triggerClass =
-  "w-full py-2 rounded-xl border border-[#0B1F3A]/12 bg-[#F8F9FC] text-[#0B1F3A] text-sm " +
-  "focus:outline-none focus:ring-2 focus:ring-[#F7931E]/30 focus:border-[#F7931E] transition-all " +
-  "flex items-center justify-between gap-2 cursor-pointer";
 
 const contentClass =
   "z-50 overflow-hidden rounded-xl border border-[#0B1F3A]/12 bg-white portal-panel " +
-  "animate-in fade-in-0 zoom-in-95";
+  "animate-in fade-in-0 zoom-in-95 shadow-lg";
 
 const itemClass =
   "relative flex cursor-pointer select-none items-center rounded-lg py-2 pl-8 pr-3 text-sm text-[#0B1F3A] " +
@@ -27,8 +22,7 @@ interface PortalSelectProps {
   options: PortalSelectOption[] | string[];
   placeholder?: string;
   className?: string;
-  /** Extra left padding when an icon sits outside the trigger */
-  withLeadingIcon?: boolean;
+  icon?: React.ReactNode;
 }
 
 function normalizeOptions(options: PortalSelectOption[] | string[]): PortalSelectOption[] {
@@ -41,19 +35,32 @@ export function PortalSelect({
   options,
   placeholder = "Select...",
   className,
-  withLeadingIcon,
+  icon,
 }: PortalSelectProps) {
   const items = normalizeOptions(options);
 
   return (
     <RadixSelect.Root value={value || undefined} onValueChange={onChange}>
       <RadixSelect.Trigger
-        className={cn(triggerClass, withLeadingIcon ? "pl-9 pr-8" : "px-3.5", className)}
+        className={cn(
+          "relative h-9 inline-flex items-center gap-1.5 rounded-xl border border-[#0B1F3A]/12",
+          "bg-[#F8F9FC] text-sm text-[#0B1F3A] cursor-pointer whitespace-nowrap",
+          "focus:outline-none focus:ring-2 focus:ring-[#F7931E]/30 focus:border-[#F7931E] transition-all",
+          icon ? "pl-9 pr-2.5" : "pl-2.5 pr-2.5",
+          className,
+        )}
         aria-label={placeholder}
       >
-        <RadixSelect.Value placeholder={placeholder} />
+        {icon && (
+          <span className="pointer-events-none absolute inset-y-0 left-0 flex w-9 items-center justify-center text-[#94A3B8] [&>svg]:size-4">
+            {icon}
+          </span>
+        )}
+        <span className="min-w-0 flex-1 truncate text-left leading-none">
+          <RadixSelect.Value placeholder={placeholder} />
+        </span>
         <RadixSelect.Icon asChild>
-          <ChevronDown className="w-4 h-4 text-[#94A3B8] flex-shrink-0" />
+          <ChevronDown className="size-3.5 flex-shrink-0 text-[#94A3B8]" />
         </RadixSelect.Icon>
       </RadixSelect.Trigger>
 

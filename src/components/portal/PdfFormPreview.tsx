@@ -127,17 +127,23 @@ export function PdfFormPreview({ data, pageNumber = 1, className, showAllPages =
             file={pdfFile}
             onLoadSuccess={({ numPages: n }) => setNumPages(n)}
             loading={null}
-            className="flex flex-col items-center gap-4 w-full"
+            className="flex flex-col items-center gap-6 w-full pb-4"
           >
             {pages.map(p => (
-              <Page
-                key={p}
-                pageNumber={p}
-                width={width}
-                renderTextLayer={false}
-                renderAnnotationLayer={false}
-                className="shadow-lg border border-black/10"
-              />
+              <div key={p} className="w-full flex flex-col items-center gap-2">
+                <Page
+                  pageNumber={p}
+                  width={width}
+                  renderTextLayer={false}
+                  renderAnnotationLayer={false}
+                  className="shadow-lg border border-black/10 bg-white"
+                />
+                {showAllPages && (
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[#94A3B8] print:hidden">
+                    Page {p}/{numPages}
+                  </p>
+                )}
+              </div>
             ))}
           </Document>
         </div>

@@ -27,8 +27,8 @@ export function CopyButton({
   const { active: copied, trigger } = useActionFeedback(resetMs);
 
   async function handleCopy() {
-    await copyToClipboard(text);
-    trigger();
+    const ok = await copyToClipboard(text);
+    if (ok) trigger();
   }
 
   const iconSwap = (
@@ -69,11 +69,11 @@ export function CopyButton({
         "inline-flex items-center gap-1.5 rounded-xl text-sm font-semibold transition-all duration-300 border",
         appearance === "solid"
           ? copied
-            ? "px-4 py-2.5 bg-emerald-50 text-emerald-700 border-emerald-200"
-            : "px-4 py-2.5 text-white border-transparent"
+            ? "px-3 py-1.5 bg-emerald-50 text-emerald-700 border-emerald-200"
+            : "px-3 py-1.5 text-white border-transparent"
           : copied
-            ? "px-3 py-1.5 bg-emerald-50 text-emerald-700 border-emerald-200 text-xs"
-            : "px-3 py-1.5 text-[#0B1F3A] bg-[#F4F6FA] hover:bg-[#EEF1F7] border-transparent text-xs",
+            ? "px-2.5 py-1 bg-emerald-50 text-emerald-700 border-emerald-200 text-xs"
+            : "px-2.5 py-1 text-[#0B1F3A] bg-[#F4F6FA] hover:bg-[#EEF1F7] border-transparent text-xs",
         className,
       )}
       style={

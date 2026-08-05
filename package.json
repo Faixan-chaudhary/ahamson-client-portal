@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "dev": "vite"
+    "dev": "vite",
+    "dev:backend": "cd backend && venv/bin/uvicorn app.main:app --reload --reload-dir app --host 127.0.0.1 --port 8000",
+    "preview": "vite preview"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",

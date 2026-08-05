@@ -40,12 +40,27 @@ export function Logo({ light = false, size = "md" }: { light?: boolean; size?: "
 
 export function PageHeader({ title, subtitle, children }: { title: string; subtitle?: React.ReactNode; children?: React.ReactNode }) {
   return (
-    <header className="bg-white/80 backdrop-blur-sm border-b border-[#0B1F3A]/8 px-6 lg:px-8 py-4 flex items-center justify-between sticky top-0 z-20 gap-4 flex-wrap shadow-[0_1px_3px_rgba(11,31,58,0.04)]">
-      <div>
-        <h1 className="font-['Playfair_Display'] text-xl font-bold text-[#0B1F3A]">{title}</h1>
-        {subtitle && <p className="text-[#94A3B8] text-xs mt-0.5">{subtitle}</p>}
+    <div className="sticky top-0 z-20">
+      <div className="px-3 sm:px-6 lg:px-9 xl:px-12">
+        <header
+          className="mx-auto max-w-[1200px] flex items-center justify-between gap-3 sm:gap-4 flex-wrap rounded-b-[16px] sm:rounded-b-[20px] px-3.5 sm:px-5 lg:px-6 py-3 sm:py-3.5 border border-[#06142A]/30 border-t-0 shadow-[0_12px_32px_-16px_rgba(6,20,42,0.48)]"
+          style={{ background: "linear-gradient(135deg, #0B1F3A 0%, #132d52 100%)" }}
+        >
+          <div className="min-w-0 flex-1">
+            <h1 className="text-base sm:text-[17px] lg:text-lg font-semibold tracking-tight text-white leading-tight">{title}</h1>
+            {subtitle && (
+              <p className="text-white/55 text-[11px] sm:text-xs mt-1 leading-relaxed">
+                {subtitle}
+              </p>
+            )}
+          </div>
+          {children && (
+            <div className="flex-shrink-0 w-full sm:w-auto [&_button]:w-full sm:[&_button]:w-auto">
+              {children}
+            </div>
+          )}
+        </header>
       </div>
-      {children}
-    </header>
+    </div>
   );
 }

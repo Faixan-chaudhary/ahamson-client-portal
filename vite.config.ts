@@ -23,6 +23,17 @@ export default defineConfig({
     tailwindcss(),
   ],
   server: {
+    watch: {
+      ignored: [
+        "**/backend/*.db",
+        "**/backend/*.db-*",
+        "**/backend/ahamson.db*",
+        "**/backend/venv/**",
+        "**/RRR/**",
+        "**/*.zip",
+        "**/dist/**",
+      ],
+    },
     proxy: {
       "/api": {
         target: "http://127.0.0.1:8000",

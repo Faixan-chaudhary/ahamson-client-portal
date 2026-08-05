@@ -5,14 +5,35 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function copyToClipboard(text: string) {
-  return navigator.clipboard.writeText(text).catch(() => {});
-}
+export async function copyToClipboard(text: string): Promise<boolean> {
+  if (!text) return false;
 
-export function generateToken() {
-  return Array.from({ length: 16 }, () =>
-    "abcdefghijklmnopqrstuvwxyz0123456789"[Math.floor(Math.random() * 36)]
-  ).join("");
+  // Secure contexts (HTTPS / localhost) — modern API
+  if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // HTTP deployments fall back below
+    }
+  }
+
+  // Fallback for http:// IP deployments (RDP server without SSL)
+  try {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.top = "0";
+    textarea.style.left = "-9999px";
+    document.body.appendChild(textarea);
+    textarea.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(textarea);
+    return ok;
+  } catch {
+    return false;
+  }
 }
 
 /** Current app origin — localhost in dev, Vercel/custom domain in production. */

@@ -1,5 +1,7 @@
 export type SubmissionStatus = "pending" | "opened" | "submitted" | "expired";
 
+export type UserRole = "admin" | "manager";
+
 export interface AuthorizedPerson {
   name: string;
   position: string;
@@ -102,3 +104,115 @@ export interface InternalApproval {
   approvedByGM: string;
   gmSignatureDate: string;
 }
+
+export interface DocumentLink {
+  id: string;
+  token: string;
+  clientCompany: string;
+  contactPerson: string;
+  email: string;
+  status: SubmissionStatus;
+  createdAt: string;
+  expiresAt: string;
+  submittedAt?: string;
+  clientUrl: string;
+}
+
+export interface PortalUser {
+  id: number;
+  email: string;
+  name: string;
+  role: UserRole;
+  isActive: boolean;
+  createdAt: string;
+  lastActiveAt?: string | null;
+}
+
+export interface CreateUserInput {
+  name: string;
+  email: string;
+  password: string;
+  role: UserRole;
+}
+
+export interface UpdateUserInput {
+  name?: string;
+  role?: UserRole;
+  isActive?: boolean;
+}
+
+export interface ListQuery {
+  search?: string;
+  status?: string;
+  role?: string;
+}
+
+export interface ListResult<T> {
+  items: T[];
+  total: number;
+}
+
+export type DealStatus = "pending" | "opened" | "approved" | "rejected" | "expired";
+
+export interface DealRegistration {
+  id: string;
+  token?: string | null;
+  partnerCompanyName: string;
+  contactPerson: string;
+  email: string;
+  endCustomerName: string;
+  projectName: string;
+  estimatedValueUsd: string;
+  status: DealStatus;
+  remarks?: string | null;
+  createdAt: string;
+  expiresAt?: string | null;
+  openedAt?: string | null;
+  submittedAt?: string | null;
+  reviewedAt?: string | null;
+  formData?: import("./deal-registration-types").DealRegistrationFormData | null;
+  createdByName?: string | null;
+  clientUrl?: string | null;
+}
+
+export interface CreateDealLinkInput {
+  partnerCompanyName: string;
+  contactPerson: string;
+  contactEmail: string;
+}
+
+export interface DealLink {
+  id: string;
+  token: string;
+  partnerCompanyName: string;
+  contactPerson: string;
+  email: string;
+  status: DealStatus | string;
+  createdAt: string;
+  expiresAt?: string | null;
+  submittedAt?: string | null;
+  clientUrl: string;
+}
+
+export interface PipelineEntry {
+  id: number;
+  quoteDate?: string | null;
+  sp: string;
+  partner: string;
+  endUser: string;
+  country: string;
+  brand: string;
+  product: string;
+  valueAed: string;
+  gpAed: string;
+  contactName: string;
+  closure: string;
+  probability: string;
+  status: string;
+  details: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type PipelineEntryInput = Omit<PipelineEntry, "id" | "createdAt" | "updatedAt">;
+

@@ -17,11 +17,10 @@ export function LiveDocumentPanel({ data, activeSection, floating }: LiveDocumen
 
   const panel = (
     <div className="flex flex-col h-full min-h-0">
-      <div className="flex items-center justify-between mb-3 flex-shrink-0">
+      <div className="flex items-center justify-between mb-2 flex-shrink-0">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
           <span className="text-xs font-bold text-[#0B1F3A] uppercase tracking-wider">Live Document</span>
-          <span className="text-[9px] text-[#94A3B8] font-medium hidden sm:inline">· Official PDF</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1 bg-[#F4F6FA] rounded-lg p-0.5">
@@ -36,9 +35,9 @@ export function LiveDocumentPanel({ data, activeSection, floating }: LiveDocumen
         </div>
       </div>
 
-      <div className="mb-3 flex-shrink-0">
-        <div className="flex justify-between text-[10px] text-[#94A3B8] mb-1">
-          <span>Document completion</span>
+      <div className="mb-2 flex-shrink-0">
+        <div className="flex justify-between text-[10px] text-[#94A3B8] mb-0.5">
+          <span>Completion</span>
           <span className="font-bold text-[#F7931E]">{progress}%</span>
         </div>
         <div className="h-1.5 bg-[#0B1F3A]/8 rounded-full overflow-hidden">
@@ -46,13 +45,9 @@ export function LiveDocumentPanel({ data, activeSection, floating }: LiveDocumen
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden rounded-xl bg-[#DDE2E8] p-2 shadow-inner scrollbar-thin">
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden rounded-xl bg-[#DDE2E8] p-1.5 shadow-inner scrollbar-thin">
         <PdfFormPreview data={data} pageNumber={previewPage} />
       </div>
-
-      <p className="text-[10px] text-[#94A3B8] text-center mt-2 flex-shrink-0">
-        Real registration form · Updates as you type
-      </p>
     </div>
   );
 
@@ -60,18 +55,18 @@ export function LiveDocumentPanel({ data, activeSection, floating }: LiveDocumen
     return (
       <>
         <button onClick={() => setOpen(true)}
-          className="xl:hidden fixed bottom-6 left-6 z-40 flex items-center gap-2 px-4 py-3 rounded-2xl text-white text-sm font-semibold shadow-2xl"
+          className="xl:hidden fixed bottom-5 right-4 z-40 flex items-center gap-2 px-3.5 py-2.5 rounded-2xl text-white text-sm font-semibold shadow-2xl"
           style={{ background: "linear-gradient(135deg, #0B1F3A, #162d52)" }}>
           <Eye className="w-4 h-4 text-[#F7931E]" />
-          <span>Live PDF</span>
+          <span className="hidden sm:inline">Live PDF</span>
           <span className="bg-[#F7931E] text-[#0B1F3A] text-[10px] font-black px-1.5 py-0.5 rounded-full">{progress}%</span>
         </button>
         {open && (
-          <div className="xl:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col">
-            <div className="bg-white rounded-b-3xl shadow-2xl flex flex-col max-h-[92vh] p-4 pt-5 min-h-0">
+          <div className="xl:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col justify-end">
+            <button type="button" className="flex-1 min-h-[8vh]" aria-label="Close preview" onClick={() => setOpen(false)} />
+            <div className="bg-white rounded-t-3xl shadow-2xl flex flex-col max-h-[88dvh] p-3 sm:p-4 pt-4 min-h-0">
               {panel}
             </div>
-            <div className="flex-1" onClick={() => setOpen(false)} />
           </div>
         )}
       </>
@@ -79,7 +74,7 @@ export function LiveDocumentPanel({ data, activeSection, floating }: LiveDocumen
   }
 
   return (
-    <div className="hidden xl:flex flex-col sticky top-24 h-[calc(100vh-120px)] bg-white rounded-2xl border border-[#0B1F3A]/10 shadow-xl p-3 lg:p-4 min-h-0 min-w-0 w-full">
+    <div className="hidden xl:flex flex-col sticky top-[4.5rem] h-[calc(100vh-108px)] bg-white rounded-2xl border border-[#0B1F3A]/10 shadow-xl p-2.5 lg:p-3 min-h-0 min-w-0 w-full">
       {panel}
     </div>
   );

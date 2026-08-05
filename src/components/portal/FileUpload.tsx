@@ -18,7 +18,7 @@ export function FileUpload({ label, required, fileName, onChange, error }: FileU
     <div>
       <div
         className={cn(
-          "flex items-center gap-3 p-4 rounded-xl border",
+          "flex items-center gap-3 p-3 rounded-xl border",
           error ? "border-red-500" : uploaded ? "border-[#F7931E]/40 bg-[#F7931E]/5" : "border-[#0B1F3A]/10 bg-[#F8F9FC]",
         )}
       >
@@ -45,7 +45,7 @@ export function FileUpload({ label, required, fileName, onChange, error }: FileU
         </div>
         <label
           htmlFor={inputId}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#0B1F3A]/12 bg-white text-xs font-semibold text-[#0B1F3A] hover:bg-[#F4F6FA] cursor-pointer transition-all flex-shrink-0"
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-[#0B1F3A]/12 bg-white text-xs font-semibold text-[#0B1F3A] hover:bg-[#F4F6FA] cursor-pointer transition-all flex-shrink-0"
         >
           <Upload className="w-3.5 h-3.5" />
           {fileName ? "Change" : "Upload"}

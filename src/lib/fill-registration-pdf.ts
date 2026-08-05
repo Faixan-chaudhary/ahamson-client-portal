@@ -159,7 +159,11 @@ export async function fillRegistrationPdf(data: DocumentFormData): Promise<Uint8
     await embedSignature(pdfDoc, page0, data.chequeSignatories[1].signature, { x: 320, y: 402, w: 82, h: 29 });
   }
   if (data.declarationSignature) {
-    await embedSignature(pdfDoc, page0, data.declarationSignature, { x: 58, y: 128, w: 180, h: 28 });
+    await embedSignature(pdfDoc, page0, data.declarationSignature, { x: 58, y: 115, w: 180, h: 28 });
+  }
+  if (data.companyStamp?.startsWith("data:image")) {
+    // Bottom-right COMPANY STAMP box on page 1 — keep inset so image stays inside the printed frame
+    await embedSignature(pdfDoc, page0, data.companyStamp, { x: 468, y: 78, w: 62, h: 62 });
   }
 
   return pdfDoc.save();

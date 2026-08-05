@@ -22,7 +22,7 @@ export const SIGNATURE_PLACEMENTS = [
   { field: "lpoSignatories", index: 1, rect: { x: 320, y: 484, w: 82, h: 29 } },
   { field: "chequeSignatories", index: 0, rect: { x: 322, y: 436, w: 80, h: 29 } },
   { field: "chequeSignatories", index: 1, rect: { x: 320, y: 402, w: 82, h: 29 } },
-  { field: "declaration", rect: { x: 58, y: 128, w: 180, h: 28 } },
+  { field: "declaration", rect: { x: 58, y: 115, w: 180, h: 28 } },
 ] as const;
 
 export function todayFormatted(): string {

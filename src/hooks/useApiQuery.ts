@@ -1,14 +1,18 @@
 import { useCallback, useEffect, useState } from "react";
 
-export function useApiQuery<T>(loader: () => Promise<T>, deps: unknown[] = []) {
+export function useApiQuery<T>(loader: () => Promise<T>, deps: unknown[] = [], enabled = true) {
   const [data, setData] = useState<T | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
 
   const refresh = useCallback(() => setTick(v => v + 1), []);
 
   useEffect(() => {
+    if (!enabled) {
+      setLoading(false);
+      return;
+    }
     let alive = true;
     setLoading(true);
     loader()
@@ -28,7 +32,7 @@ export function useApiQuery<T>(loader: () => Promise<T>, deps: unknown[] = []) {
     return () => {
       alive = false;
     };
-  }, [tick, ...deps]);
+  }, [enabled, tick, ...deps]);
 
-  return { data, loading, error, refresh };
+  return { data, setData, loading, error, refresh };
 }

@@ -1,26 +1,68 @@
-import type { CreateLinkInput, DocumentFormData, InternalApproval, Submission } from "./types";
+import type { CreateLinkInput, CreateUserInput, CreateDealLinkInput, DealLink, DealRegistration, DocumentFormData, DocumentLink, InternalApproval, ListQuery, ListResult, PipelineEntry, PipelineEntryInput, PortalUser, Submission, UpdateUserInput } from "./types";
 import { getAppOrigin } from "./utils";
 import {
+  createDeal,
+  createDealLink,
+  createPipelineEntry,
   createSubmission,
+  createUser,
+  deletePipelineEntry,
+  deleteUser,
+  downloadPipelineExcel,
+  fetchClientDealLink,
   fetchClientLink,
   fetchDashboard,
+  fetchDeal,
+  fetchDealDraft,
+  fetchDealLinks,
+  fetchDeals,
+  fetchDocumentLinks,
   fetchDraft,
+  fetchPipeline,
   fetchSubmission,
   fetchSubmissions,
   fetchSubmittedDocument,
+  fetchUsers,
+  markClientDealOpened,
   markClientOpened,
   saveApproval,
+  saveDealDraftApi,
   saveDraftApi,
+  submitDealViaLinkApi,
   submitDocumentApi,
+  updateDealStatus,
+  updatePipelineEntry,
+  updateUser,
 } from "./api";
 import type { DashboardData } from "./api";
+import type { DealRegistrationFormData } from "./deal-registration-types";
 
 export async function getDashboard(): Promise<DashboardData> {
   return fetchDashboard();
 }
 
-export async function getSubmissions(): Promise<Submission[]> {
-  return fetchSubmissions();
+export async function getSubmissions(params: ListQuery = {}): Promise<ListResult<Submission>> {
+  return fetchSubmissions(params);
+}
+
+export async function getDocumentLinks(params: ListQuery = {}): Promise<ListResult<DocumentLink>> {
+  return fetchDocumentLinks(params);
+}
+
+export async function getUsers(params: ListQuery = {}): Promise<ListResult<PortalUser>> {
+  return fetchUsers(params);
+}
+
+export async function createPortalUser(input: CreateUserInput): Promise<PortalUser> {
+  return createUser(input);
+}
+
+export async function updatePortalUser(id: number, input: UpdateUserInput): Promise<PortalUser> {
+  return updateUser(id, input);
+}
+
+export async function removePortalUser(id: number): Promise<void> {
+  return deleteUser(id);
 }
 
 export async function getSubmissionById(id: string): Promise<Submission | null> {
@@ -37,11 +79,6 @@ export async function getSubmissionByToken(token: string): Promise<Submission | 
   } catch {
     return null;
   }
-}
-
-export async function createSecureLink(input: CreateLinkInput): Promise<Submission> {
-  const res = await createSubmission(input);
-  return res.submission;
 }
 
 export async function markSubmissionOpened(token: string): Promise<void> {
@@ -80,4 +117,100 @@ export async function saveInternalApproval(id: string, approval: InternalApprova
 export async function getClientLinkFromApi(input: CreateLinkInput): Promise<{ submission: Submission; link: string }> {
   const res = await createSubmission(input);
   return { submission: res.submission, link: res.clientUrl };
+}
+
+export function getDealClientLink(token: string) {
+  return `${getAppOrigin()}/client/deal/${token}`;
+}
+
+export async function getDealLinkFromApi(input: CreateDealLinkInput): Promise<{ deal: DealRegistration; link: string }> {
+  const res = await createDealLink(input);
+  return { deal: res.deal, link: res.clientUrl };
+}
+
+export async function getDealLinks(params: ListQuery = {}): Promise<ListResult<DealLink>> {
+  return fetchDealLinks(params);
+}
+
+export async function getClientDealLink(token: string): Promise<DealRegistration> {
+  return fetchClientDealLink(token);
+}
+
+export async function markDealLinkOpened(token: string): Promise<void> {
+  return markClientDealOpened(token);
+}
+
+export async function getDealFormDraft(token: string): Promise<DealRegistrationFormData | null> {
+  const data = await fetchDealDraft(token);
+  return data as DealRegistrationFormData | null;
+}
+
+export async function saveDealFormDraft(token: string, data: DealRegistrationFormData): Promise<void> {
+  await saveDealDraftApi(token, data as unknown as Record<string, unknown>);
+}
+
+export async function submitDealFormViaLink(token: string, data: DealRegistrationFormData): Promise<DealRegistration> {
+  return submitDealViaLinkApi(token, data as unknown as Record<string, unknown>);
+}
+
+export function isDealLinkExpired(deal: Pick<DealRegistration, "status" | "expiresAt" | "submittedAt">): boolean {
+  if (deal.submittedAt) return false;
+  if (deal.status === "expired") return true;
+  if (!deal.expiresAt) return false;
+  return new Date(deal.expiresAt).getTime() < Date.now();
+}
+
+export async function getDeals(params: ListQuery = {}): Promise<ListResult<DealRegistration>> {
+  return fetchDeals(params);
+}
+
+export async function submitDealRegistration(data: DealRegistrationFormData): Promise<DealRegistration> {
+  return createDeal(data as unknown as Record<string, unknown>);
+}
+
+export async function getDealById(id: string): Promise<DealRegistration | null> {
+  try {
+    return await fetchDeal(id);
+  } catch {
+    return null;
+  }
+}
+
+export async function setDealStatus(
+  id: string,
+  payload: {
+    status: string;
+    remarks?: string | null;
+    dealId?: string | null;
+    registeredBy?: string | null;
+    registrationDate?: string | null;
+  },
+): Promise<DealRegistration> {
+  return updateDealStatus(id, payload);
+}
+
+export async function getPipeline(params: import("./api").PipelineFilters = {}): Promise<ListResult<PipelineEntry>> {
+  return fetchPipeline(params);
+}
+
+export async function addPipelineEntry(input: PipelineEntryInput): Promise<PipelineEntry> {
+  return createPipelineEntry(input);
+}
+
+export async function savePipelineEntry(id: number, input: Partial<PipelineEntryInput>): Promise<PipelineEntry> {
+  return updatePipelineEntry(id, input);
+}
+
+export async function removePipelineEntry(id: number): Promise<void> {
+  return deletePipelineEntry(id);
+}
+
+export async function exportPipelineSheet(params: import("./api").PipelineFilters = {}): Promise<void> {
+  const blob = await downloadPipelineExcel(params);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `AHamson-Pipeline-${new Date().toISOString().slice(0, 10)}.xlsx`;
+  a.click();
+  URL.revokeObjectURL(url);
 }

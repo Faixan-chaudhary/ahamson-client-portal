@@ -11,8 +11,13 @@ const STATUS_CFG: Record<SubmissionStatus, { label: string; bg: string; text: st
 export function StatusBadge({ status }: { status: SubmissionStatus }) {
   const c = STATUS_CFG[status];
   return (
-    <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border tracking-wide uppercase", c.bg, c.text, c.border)}>
-      <span className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0", c.dot)} />
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold border tracking-[0.06em] uppercase whitespace-nowrap shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]",
+        c.bg, c.text, c.border,
+      )}
+    >
+      <span className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0 ring-2 ring-white/60", c.dot)} />
       {c.label}
     </span>
   );

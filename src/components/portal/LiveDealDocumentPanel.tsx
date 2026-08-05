@@ -1,0 +1,85 @@
+import { useState } from "react";
+import { Eye, X } from "lucide-react";
+import type { DealRegistrationFormData } from "@/lib/deal-registration-types";
+import { computeDealFormProgress } from "@/lib/deal-registration-types";
+import { DealPdfPreview } from "./DealPdfPreview";
+import { cn } from "@/lib/utils";
+
+interface LiveDealDocumentPanelProps {
+  data: DealRegistrationFormData;
+  floating?: boolean;
+  /** Fill the parent's height instead of using sticky + viewport-based height. */
+  fill?: boolean;
+}
+
+export function LiveDealDocumentPanel({ data, floating, fill }: LiveDealDocumentPanelProps) {
+  const [open, setOpen] = useState(false);
+  const progress = computeDealFormProgress(data);
+
+  const panel = (
+    <div className="flex flex-col h-full min-h-0">
+      <div className="flex items-center justify-between mb-2 flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="text-xs font-bold text-[#0B1F3A] uppercase tracking-wider">Live Document</span>
+        </div>
+        {floating && (
+          <button onClick={() => setOpen(false)} className="w-7 h-7 rounded-lg hover:bg-[#F4F6FA] flex items-center justify-center">
+            <X className="w-4 h-4 text-[#64748B]" />
+          </button>
+        )}
+      </div>
+
+      <div className="mb-2 flex-shrink-0">
+        <div className="flex justify-between text-[10px] text-[#94A3B8] mb-0.5">
+          <span>Completion</span>
+          <span className="font-bold text-[#F7931E]">{progress}%</span>
+        </div>
+        <div className="h-1.5 bg-[#0B1F3A]/8 rounded-full overflow-hidden">
+          <div className="h-full bg-gradient-to-r from-[#F7931E] to-emerald-500 rounded-full transition-all duration-700" style={{ width: `${progress}%` }} />
+        </div>
+      </div>
+
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden rounded-xl bg-[#DDE2E8] p-1.5 shadow-inner scrollbar-thin">
+        <DealPdfPreview data={data} />
+      </div>
+    </div>
+  );
+
+  if (floating) {
+    return (
+      <>
+        <button
+          onClick={() => setOpen(true)}
+          className="xl:hidden fixed bottom-5 right-4 z-40 flex items-center gap-2 px-3.5 py-2.5 rounded-2xl text-white text-sm font-semibold shadow-2xl"
+          style={{ background: "linear-gradient(135deg, #0B1F3A, #162d52)" }}
+        >
+          <Eye className="w-4 h-4 text-[#F7931E]" />
+          <span className="hidden sm:inline">Live PDF</span>
+          <span className="bg-[#F7931E] text-[#0B1F3A] text-[10px] font-black px-1.5 py-0.5 rounded-full">{progress}%</span>
+        </button>
+        {open && (
+          <div className="xl:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex flex-col justify-end">
+            <button type="button" className="flex-1 min-h-[8vh]" aria-label="Close preview" onClick={() => setOpen(false)} />
+            <div className="bg-white rounded-t-3xl shadow-2xl flex flex-col max-h-[88dvh] p-3 sm:p-4 pt-4 min-h-0">
+              {panel}
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
+
+  return (
+    <div className={cn(
+      "hidden xl:flex flex-col bg-white rounded-2xl border border-[#0B1F3A]/10 shadow-xl p-2.5 lg:p-3 min-h-0 min-w-0 w-full",
+      fill ? "h-full" : "sticky top-[4.5rem] h-[calc(100vh-108px)]",
+    )}>
+      {panel}
+    </div>
+  );
+}
+
+export function LiveDealDocumentPanelMobile(props: LiveDealDocumentPanelProps) {
+  return <LiveDealDocumentPanel {...props} floating />;
+}
