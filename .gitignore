@@ -153,8 +153,25 @@ temp/
 *.pid.lock
 .tern-port
 
+# =========================
+# Backend (Python / FastAPI)
+# =========================
 backend/.env
-backend/ahamson.db
+backend/.env.*
+!backend/.env.example
+backend/venv/
+backend/.venv/
+backend/env/
 backend/__pycache__/
 backend/**/__pycache__/
-backend/.venv/
+backend/*.py[cod]
+backend/*.db
+backend/*.db-shm
+backend/*.db-wal
+backend/*.db.corrupt.*
+backend/ahamson.db
+backend/ahamson.db-*
+backend/*.log
+
+# Keep frontend production env example if present
+!.env.production.example
