@@ -1,6 +1,6 @@
 export type SubmissionStatus = "pending" | "opened" | "submitted" | "expired";
 
-export type UserRole = "admin" | "manager";
+export type UserRole = "admin" | "manager" | "finance_manager" | "sales_head" | "staff";
 
 export interface AuthorizedPerson {
   name: string;
@@ -194,6 +194,14 @@ export interface DealLink {
   clientUrl: string;
 }
 
+export interface ActivityLogItem {
+  action: string;
+  detail?: string;
+  by?: string;
+  role?: string;
+  at?: string;
+}
+
 export interface PipelineEntry {
   id: number;
   quoteDate?: string | null;
@@ -210,9 +218,125 @@ export interface PipelineEntry {
   probability: string;
   status: string;
   details: string;
+  activityLogs?: ActivityLogItem[];
   createdAt: string;
   updatedAt: string;
 }
 
-export type PipelineEntryInput = Omit<PipelineEntry, "id" | "createdAt" | "updatedAt">;
+export type PipelineEntryInput = Omit<PipelineEntry, "id" | "createdAt" | "updatedAt" | "activityLogs">;
+
+export type QuotationPhase = "budgetary" | "formal";
+
+export interface QuotationFollowUp {
+  date: string;
+  remarks: string;
+  by?: string;
+  at?: string;
+}
+
+export interface QuotationApproval {
+  type: string;
+  date: string;
+  action: string;
+  remarks?: string;
+  by?: string;
+  role?: string;
+  at?: string;
+}
+
+export type QuotationActivityLog = ActivityLogItem;
+
+export interface Quotation {
+  id: number;
+  quoteNumber: string;
+  phase: QuotationPhase | string;
+  status: string;
+  quotationDate: string;
+  salesPerson: string;
+  partner: string;
+  endUser: string;
+  country: string;
+  brand: string;
+  products: string;
+  dealValue: string;
+  gpValue: string;
+  contactPerson: string;
+  closureDate: string;
+  probability: string;
+  details: string;
+  siAttachmentName: string;
+  siAttachmentNote: string;
+  quotationSubmissionDate: string;
+  closureReason: string;
+  closureRemarks: string;
+  parentQuoteId?: number | null;
+  childQuoteId?: number | null;
+  parentQuoteNumber?: string;
+  childQuoteNumber?: string;
+  formalSubmissionDate: string;
+  poFileName: string;
+  poNote: string;
+  oem: string;
+  orderDate: string;
+  orderDetails: string;
+  expectedDeliveryDate: string;
+  orderSubmissionDate: string;
+  orderRemarks: string;
+  invoiceFileName: string;
+  deliveryDocsNote: string;
+  deliveryDate: string;
+  deliveryRemarks: string;
+  paymentReceivedDate: string;
+  paymentDocsNote: string;
+  paymentRemarks: string;
+  followups: QuotationFollowUp[];
+  approvals: QuotationApproval[];
+  activityLogs: QuotationActivityLog[];
+  allowedActions: string[];
+  actionHint?: string;
+  createdAt: string;
+  updatedAt: string;
+  createdById?: number | null;
+}
+
+export type QuotationInput = {
+  quotationDate?: string;
+  salesPerson?: string;
+  partner?: string;
+  endUser?: string;
+  country?: string;
+  brand?: string;
+  products?: string;
+  dealValue?: string;
+  gpValue?: string;
+  contactPerson?: string;
+  closureDate?: string;
+  probability?: string;
+  details?: string;
+  siAttachmentName?: string;
+  siAttachmentNote?: string;
+};
+
+export interface SalesActivity {
+  id: number;
+  salesPerson: string;
+  customerName: string;
+  meetingDate: string;
+  contactPerson: string;
+  contactNumber: string;
+  meetingOutputs: string;
+  activityLogs?: ActivityLogItem[];
+  createdAt: string;
+  updatedAt: string;
+  createdById?: number | null;
+}
+
+export type SalesActivityInput = {
+  salesPerson?: string;
+  customerName?: string;
+  meetingDate?: string;
+  contactPerson?: string;
+  contactNumber?: string;
+  meetingOutputs?: string;
+};
 

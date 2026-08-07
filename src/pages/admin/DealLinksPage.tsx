@@ -5,17 +5,20 @@ import { CreateDealLinkModal } from "@/components/portal/CreateDealLinkModal";
 import { DealLinksTable } from "@/components/portal/DealLinksTable";
 import { Button } from "@/components/portal/Button";
 import { ApiErrorAlert } from "@/components/portal/ApiErrorAlert";
+import { toFilterParam } from "@/components/portal/TableFiltersPopover";
 import { getDealLinks } from "@/lib/storage";
 import { useApiQuery } from "@/hooks/useApiQuery";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { can } from "@/lib/permissions";
 
 export function DealLinksPage() {
+  const canManage = can.manageDealLinks();
   const [showModal, setShowModal] = useState(false);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const debouncedSearch = useDebouncedValue(search);
   const { data, loading, error, refresh } = useApiQuery(
-    () => getDealLinks({ search: debouncedSearch, status: statusFilter }),
+    () => getDealLinks({ search: debouncedSearch, status: toFilterParam(statusFilter) }),
     [debouncedSearch, statusFilter],
   );
 
@@ -25,10 +28,12 @@ export function DealLinksPage() {
         title="Deal Registration Links"
         subtitle="Create and manage secure partner deal registration links"
       >
-        <Button variant="gold" icon={<FilePlus className="w-4 h-4" />} onClick={() => setShowModal(true)}>
-          <span className="sm:hidden">Create Link</span>
-          <span className="hidden sm:inline">Create Deal Link</span>
-        </Button>
+        {canManage && (
+          <Button variant="gold" icon={<FilePlus className="w-4 h-4" />} onClick={() => setShowModal(true)}>
+            <span className="sm:hidden">Create Link</span>
+            <span className="hidden sm:inline">Create Deal Link</span>
+          </Button>
+        )}
       </PageHeader>
 
       <div className="p-3 sm:p-6 lg:p-8 w-full">

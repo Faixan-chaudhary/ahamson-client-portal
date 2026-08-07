@@ -36,6 +36,9 @@ export function isAdmin(): boolean {
 
 export function roleLabel(role?: string): string {
   if (role === "admin") return "Administrator";
-  if (role === "manager") return "Manager";
+  if (role === "manager") return "Sales Person";
+  if (role === "finance_manager") return "Finance Manager";
+  if (role === "sales_head") return "Sales Head";
+  if (role === "staff") return "Salicru Staff";
   return "User";
 }

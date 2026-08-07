@@ -29,7 +29,6 @@ import { formatDateTime } from "@/lib/utils";
 import type { Submission } from "@/lib/types";
 
 const STATUS_OPTIONS = [
-  { value: "all", label: "All Status" },
   { value: "pending", label: "Pending" },
   { value: "opened", label: "Opened" },
   { value: "submitted", label: "Submitted" },
@@ -40,17 +39,17 @@ interface SubmissionsTableProps {
   submissions: Submission[];
   loading?: boolean;
   search: string;
-  statusFilter: string;
+  statusFilter: string[];
   total?: number;
   onSearchChange: (value: string) => void;
-  onStatusChange: (value: string) => void;
+  onStatusChange: (value: string[]) => void;
 }
 
 export function SubmissionsTable({
   submissions,
   loading = false,
   search,
-  statusFilter,
+  statusFilter = [],
   total,
   onSearchChange,
   onStatusChange,
@@ -88,7 +87,7 @@ export function SubmissionsTable({
               {
                 key: "status",
                 label: "Status",
-                value: statusFilter,
+                values: statusFilter,
                 options: STATUS_OPTIONS,
                 onChange: onStatusChange,
               },

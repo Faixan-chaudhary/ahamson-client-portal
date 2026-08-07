@@ -350,3 +350,169 @@ export async function downloadPipelineExcel(params: PipelineFilters = {}): Promi
   }
   return res.blob();
 }
+
+export type QuotationQueue = "action" | "finance" | "sales_head" | "sales" | "";
+
+export type QuotationFilters = ListQuery & { phase?: string; queue?: QuotationQueue };
+
+function quotationQueryString(params: QuotationFilters = {}): string {
+  const query = new URLSearchParams();
+  if (params.search?.trim()) query.set("search", params.search.trim());
+  if (params.status && params.status !== "all") query.set("status", params.status);
+  if (params.phase && params.phase !== "all") query.set("phase", params.phase);
+  if (params.queue) query.set("queue", params.queue);
+  return query.toString() ? `?${query.toString()}` : "";
+}
+
+export async function fetchQuotations(params: QuotationFilters = {}): Promise<ListResult<import("./types").Quotation>> {
+  return request(`/quotations${quotationQueryString(params)}`, {}, true);
+}
+
+export interface QuotationStats {
+  total: number;
+  open: number;
+  submitted: number;
+  lost: number;
+  closed: number;
+  pendingFinance: number;
+  pendingSalesHead: number;
+  pendingSales?: number;
+  myQueue?: number;
+  byPhase?: Record<string, number>;
+  byStatus?: { status: string; count: number }[];
+}
+
+export async function fetchQuotationStats(): Promise<QuotationStats> {
+  return request("/quotations/stats", {}, true);
+}
+
+export async function downloadQuotationsExcel(params: QuotationFilters = {}): Promise<Blob> {
+  const headers: Record<string, string> = { ...authHeaders() };
+  const res = await fetch(`${API_BASE}/api/quotations/export${quotationQueryString(params)}`, { headers });
+  if (!res.ok) {
+    if (res.status === 401 || res.status === 403) {
+      clearSession();
+      if (typeof window !== "undefined" && !window.location.pathname.startsWith("/admin/login")) {
+        window.location.assign("/admin/login");
+      }
+    }
+    throw new ApiError(res.status, await parseError(res));
+  }
+  return res.blob();
+}
+
+export async function downloadQuotationPdf(id: number): Promise<Blob> {
+  const headers: Record<string, string> = { ...authHeaders() };
+  const res = await fetch(`${API_BASE}/api/quotations/${id}/pdf`, { headers });
+  if (!res.ok) {
+    if (res.status === 401 || res.status === 403) {
+      clearSession();
+      if (typeof window !== "undefined" && !window.location.pathname.startsWith("/admin/login")) {
+        window.location.assign("/admin/login");
+      }
+    }
+    throw new ApiError(res.status, await parseError(res));
+  }
+  return res.blob();
+}
+
+export async function syncPipelineFromQuotations(): Promise<{
+  created: number;
+  updated: number;
+  skipped: number;
+  totalPipeline: number;
+  message: string;
+}> {
+  return request("/pipeline/sync-from-quotations", { method: "POST" }, true);
+}
+
+export async function fetchPipelineReview(): Promise<ListResult<import("./types").PipelineEntry>> {
+  return request("/pipeline/review", {}, true);
+}
+
+export async function fetchQuotation(id: number): Promise<import("./types").Quotation> {
+  return request(`/quotations/${id}`, {}, true);
+}
+
+export async function createQuotationApi(input: import("./types").QuotationInput): Promise<import("./types").Quotation> {
+  return request("/quotations", { method: "POST", body: JSON.stringify(input) }, true);
+}
+
+export async function updateQuotationApi(
+  id: number,
+  input: Partial<import("./types").QuotationInput> & Record<string, unknown>,
+): Promise<import("./types").Quotation> {
+  return request(`/quotations/${id}`, { method: "PATCH", body: JSON.stringify(input) }, true);
+}
+
+export async function quotationAction(
+  id: number,
+  action:
+    | "submit-budgetary"
+    | "followups"
+    | "close-lost"
+    | "start-formal"
+    | "submit-finance"
+    | "finance-review"
+    | "submit-formal"
+    | "oem-draft"
+    | "submit-order-approval"
+    | "sales-head-review"
+    | "place-oem-order"
+    | "deliver"
+    | "close-deal"
+    | "reopen-revisions",
+  body: Record<string, unknown> = {},
+): Promise<import("./types").Quotation> {
+  return request(`/quotations/${id}/${action}`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  }, true);
+}
+
+export type SalesActivityFilters = ListQuery & { salesPerson?: string };
+
+function salesActivityQueryString(params: SalesActivityFilters = {}): string {
+  const query = new URLSearchParams();
+  if (params.search?.trim()) query.set("search", params.search.trim());
+  if (params.salesPerson && params.salesPerson !== "all") query.set("sales_person", params.salesPerson);
+  return query.toString() ? `?${query.toString()}` : "";
+}
+
+export async function fetchSalesActivities(
+  params: SalesActivityFilters = {},
+): Promise<ListResult<import("./types").SalesActivity>> {
+  return request(`/sales-activities${salesActivityQueryString(params)}`, {}, true);
+}
+
+export async function createSalesActivityApi(
+  input: import("./types").SalesActivityInput,
+): Promise<import("./types").SalesActivity> {
+  return request("/sales-activities", { method: "POST", body: JSON.stringify(input) }, true);
+}
+
+export async function updateSalesActivityApi(
+  id: number,
+  input: Partial<import("./types").SalesActivityInput>,
+): Promise<import("./types").SalesActivity> {
+  return request(`/sales-activities/${id}`, { method: "PATCH", body: JSON.stringify(input) }, true);
+}
+
+export async function deleteSalesActivityApi(id: number): Promise<void> {
+  await request(`/sales-activities/${id}`, { method: "DELETE" }, true);
+}
+
+export async function downloadSalesActivitiesExcel(params: SalesActivityFilters = {}): Promise<Blob> {
+  const headers: Record<string, string> = { ...authHeaders() };
+  const res = await fetch(`${API_BASE}/api/sales-activities/export${salesActivityQueryString(params)}`, { headers });
+  if (!res.ok) {
+    if (res.status === 401 || res.status === 403) {
+      clearSession();
+      if (typeof window !== "undefined" && !window.location.pathname.startsWith("/admin/login")) {
+        window.location.assign("/admin/login");
+      }
+    }
+    throw new ApiError(res.status, await parseError(res));
+  }
+  return res.blob();
+}

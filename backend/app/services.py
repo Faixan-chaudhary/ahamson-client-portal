@@ -142,10 +142,18 @@ def _matches_search(row: Submission, search: str | None) -> bool:
     return term in haystack
 
 
-def _matches_status(row: Submission, status: str | None) -> bool:
-    if not status or status == "all":
+def _matches_multi(value: str | None, filter_value: str | None) -> bool:
+    """Match a field against a single value or comma-separated multi-select filter."""
+    if not filter_value or filter_value == "all":
         return True
-    return row.status == status
+    options = {part.strip().lower() for part in filter_value.split(",") if part.strip()}
+    if not options:
+        return True
+    return (value or "").strip().lower() in options
+
+
+def _matches_status(row: Submission, status: str | None) -> bool:
+    return _matches_multi(row.status, status)
 
 
 def _load_submissions(db: Session) -> list[Submission]:
@@ -335,13 +343,13 @@ def list_users(db: Session, search: str | None = None, role: str | None = None) 
     rows = db.query(User).order_by(User.created_at.desc()).all()
     filtered = [
         row for row in rows
-        if _matches_user_search(row, search) and (not role or role == "all" or row.role == role)
+        if _matches_user_search(row, search) and _matches_multi(row.role, role)
     ]
     return UsersListResponse(items=[to_user_out(row) for row in filtered], total=len(filtered))
 
 
 def create_user(db: Session, payload: UserCreate) -> UserOut:
-    if payload.role not in {"admin", "manager"}:
+    if payload.role not in {"admin", "manager", "finance_manager", "sales_head", "staff"}:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid role")
     existing = db.query(User).filter(User.email == str(payload.email)).first()
     if existing:
@@ -364,9 +372,9 @@ def update_user(db: Session, user_id: int, payload: UserUpdate, actor: User) -> 
     if not row:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     if payload.role is not None:
-        if payload.role not in {"admin", "manager"}:
+        if payload.role not in {"admin", "manager", "finance_manager", "sales_head", "staff"}:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid role")
-        if row.role == "admin" and payload.role == "manager":
+        if row.role == "admin" and payload.role != "admin":
             admin_count = db.query(func.count(User.id)).filter(User.role == "admin").scalar() or 0
             if admin_count <= 1:
                 raise HTTPException(
@@ -575,7 +583,7 @@ def list_deal_links(
     items: list[DealLinkOut] = []
     for row in rows:
         refresh_deal_expired(row, db)
-        if status_filter and status_filter != "all" and row.status != status_filter:
+        if not _matches_multi(row.status, status_filter):
             continue
         if term:
             haystack = " ".join([
@@ -744,7 +752,7 @@ def query_deal_registrations(
     filtered: list[DealRegistration] = []
     for row in rows:
         refresh_deal_expired(row, db)
-        if status_filter and status_filter != "all" and row.status != status_filter:
+        if not _matches_multi(row.status, status_filter):
             continue
         if term:
             haystack = " ".join([

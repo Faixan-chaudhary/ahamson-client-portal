@@ -6,6 +6,7 @@ import { ParticleNetwork } from "@/components/portal/ParticleNetwork";
 import { GOLD, NAVY } from "@/lib/constants";
 import { login } from "@/lib/api";
 import { setSession } from "@/lib/auth";
+import { homePathForRole } from "@/lib/permissions";
 import { formatLinkExpiry, useAppConfig } from "@/hooks/useAppConfig";
 
 const navyBg = "linear-gradient(145deg, #06142A 0%, #0B1F3A 50%, #0F2B50 100%)";
@@ -31,7 +32,7 @@ export function LoginPage() {
       await new Promise<void>(resolve => {
         requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
       });
-      navigate("/admin/dashboard", { replace: true, state: { fromLogin: true } });
+      navigate(homePathForRole(res.user.role), { replace: true, state: { fromLogin: true } });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Invalid credentials.");
       setLoading(false);
@@ -104,7 +105,7 @@ export function LoginPage() {
                   <label className="block text-[11px] font-semibold text-[#0B1F3A]/60 uppercase tracking-[0.1em] mb-1.5">Email Address</label>
                   <div className="relative group">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
-                    <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full pl-9 pr-3 py-2 rounded-xl border border-[#0B1F3A]/12 bg-[#F8F9FC] text-sm focus:outline-none focus:ring-2 focus:ring-[#F7931E]/30" required />
+                    <input type="email" name="email" autoComplete="username" value={email} onChange={e => setEmail(e.target.value)} className="w-full pl-9 pr-3 py-2 rounded-xl border border-[#0B1F3A]/12 bg-[#F8F9FC] text-sm focus:outline-none focus:ring-2 focus:ring-[#F7931E]/30" required />
                   </div>
                 </div>
                 <div>
@@ -116,6 +117,8 @@ export function LoginPage() {
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
                     <input
                       type={showPassword ? "text" : "password"}
+                      name="password"
+                      autoComplete="current-password"
                       value={password}
                       onChange={e => setPassword(e.target.value)}
                       className="w-full pl-9 pr-9 py-2 rounded-xl border border-[#0B1F3A]/12 bg-[#F8F9FC] text-sm focus:outline-none focus:ring-2 focus:ring-[#F7931E]/30"

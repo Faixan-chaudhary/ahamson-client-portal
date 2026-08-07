@@ -23,7 +23,7 @@ export function useApiQuery<T>(loader: () => Promise<T>, deps: unknown[] = [], e
       })
       .catch(err => {
         if (!alive) return;
-        setData(null);
+        // Keep previous rows visible on refresh failure (avoid empty table flash).
         setError(err instanceof Error ? err.message : "Request failed");
       })
       .finally(() => {

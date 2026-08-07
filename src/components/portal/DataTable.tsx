@@ -177,13 +177,23 @@ export function DataTableBody({ children }: { children: React.ReactNode }) {
   return <tbody className="[&>tr:nth-child(even)]:bg-[#F9FAFC]/70">{children}</tbody>;
 }
 
-export function DataTableRow({ children, className }: { children: React.ReactNode; className?: string }) {
+export function DataTableRow({
+  children,
+  className,
+  onClick,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  onClick?: () => void;
+}) {
   return (
     <tr
+      onClick={onClick}
       className={cn(
         "group transition-colors duration-150",
         "border-b border-[#0B1F3A]/[0.045] last:border-0",
         "hover:bg-[#FFF8F0]/80",
+        onClick && "cursor-pointer",
         className,
       )}
     >
@@ -260,7 +270,7 @@ export function DataTableIconButton({
   className,
 }: {
   title: string;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
   disabled?: boolean;
   children: React.ReactNode;
   className?: string;

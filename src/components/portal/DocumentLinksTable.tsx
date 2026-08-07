@@ -22,7 +22,6 @@ import { formatDateTime } from "@/lib/utils";
 import type { DocumentLink } from "@/lib/types";
 
 const STATUS_OPTIONS = [
-  { value: "all", label: "All Status" },
   { value: "pending", label: "Pending" },
   { value: "opened", label: "Opened" },
   { value: "submitted", label: "Submitted" },
@@ -33,17 +32,17 @@ interface DocumentLinksTableProps {
   links: DocumentLink[];
   loading?: boolean;
   search: string;
-  statusFilter: string;
+  statusFilter: string[];
   total?: number;
   onSearchChange: (value: string) => void;
-  onStatusChange: (value: string) => void;
+  onStatusChange: (value: string[]) => void;
 }
 
 export function DocumentLinksTable({
   links,
   loading = false,
   search,
-  statusFilter,
+  statusFilter = [],
   total,
   onSearchChange,
   onStatusChange,
@@ -66,7 +65,7 @@ export function DocumentLinksTable({
               {
                 key: "status",
                 label: "Status",
-                value: statusFilter,
+                values: statusFilter,
                 options: STATUS_OPTIONS,
                 onChange: onStatusChange,
               },

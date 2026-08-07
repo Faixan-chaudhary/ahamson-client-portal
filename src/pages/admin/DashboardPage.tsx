@@ -9,28 +9,32 @@ import { CreateLinkModal } from "@/components/portal/CreateLinkModal";
 import { CreateDealLinkModal } from "@/components/portal/CreateDealLinkModal";
 import { Button } from "@/components/portal/Button";
 import { ApiErrorAlert } from "@/components/portal/ApiErrorAlert";
+import { toFilterParam } from "@/components/portal/TableFiltersPopover";
 import { getDashboard, getDeals, getSubmissions } from "@/lib/storage";
 import { useApiQuery } from "@/hooks/useApiQuery";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { NAVY } from "@/lib/constants";
+import { can } from "@/lib/permissions";
 
 export function DashboardPage() {
+  const canDocs = can.manageDocumentLinks();
+  const canDeals = can.manageDealLinks();
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [showDealLinkModal, setShowDealLinkModal] = useState(false);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [dealSearch, setDealSearch] = useState("");
-  const [dealStatusFilter, setDealStatusFilter] = useState("all");
+  const [dealStatusFilter, setDealStatusFilter] = useState<string[]>([]);
   const debouncedSearch = useDebouncedValue(search);
   const debouncedDealSearch = useDebouncedValue(dealSearch);
 
   const { data, loading, error, refresh } = useApiQuery(() => getDashboard(), []);
   const { data: submissionsData, loading: submissionsLoading, error: submissionsError, refresh: refreshSubmissions } = useApiQuery(
-    () => getSubmissions({ search: debouncedSearch, status: statusFilter }),
+    () => getSubmissions({ search: debouncedSearch, status: toFilterParam(statusFilter) }),
     [debouncedSearch, statusFilter],
   );
   const { data: dealsData, loading: dealsLoading, error: dealsError, refresh: refreshDeals } = useApiQuery(
-    () => getDeals({ search: debouncedDealSearch, status: dealStatusFilter }),
+    () => getDeals({ search: debouncedDealSearch, status: toFilterParam(dealStatusFilter) }),
     [debouncedDealSearch, dealStatusFilter],
   );
 
@@ -47,20 +51,26 @@ export function DashboardPage() {
         title="Dashboard"
         subtitle={<GreetingSubtitle />}
       >
-        <div className="flex items-center gap-2 flex-wrap justify-end">
-          <Button
-            variant="outline"
-            icon={<ClipboardPen className="w-4 h-4" />}
-            onClick={() => setShowDealLinkModal(true)}
-          >
-            <span className="sm:hidden">Deal Link</span>
-            <span className="hidden sm:inline">Create Deal Link</span>
-          </Button>
-          <Button variant="gold" icon={<FilePlus className="w-4 h-4" />} onClick={() => setShowLinkModal(true)}>
-            <span className="sm:hidden">Doc Link</span>
-            <span className="hidden sm:inline">Create Document Link</span>
-          </Button>
-        </div>
+        {(canDocs || canDeals) && (
+          <div className="flex items-center gap-2 flex-wrap justify-end">
+            {canDeals && (
+              <Button
+                variant="outline"
+                icon={<ClipboardPen className="w-4 h-4" />}
+                onClick={() => setShowDealLinkModal(true)}
+              >
+                <span className="sm:hidden">Deal Link</span>
+                <span className="hidden sm:inline">Create Deal Link</span>
+              </Button>
+            )}
+            {canDocs && (
+              <Button variant="gold" icon={<FilePlus className="w-4 h-4" />} onClick={() => setShowLinkModal(true)}>
+                <span className="sm:hidden">Doc Link</span>
+                <span className="hidden sm:inline">Create Document Link</span>
+              </Button>
+            )}
+          </div>
+        )}
       </PageHeader>
 
       <div className="p-3 sm:p-6 lg:p-8 w-full space-y-4 sm:space-y-6">

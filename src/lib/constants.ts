@@ -14,16 +14,12 @@ export const LEGAL_STATUSES = [
   "Sole Prop.", "Partnership", "LLC", "FZCO", "FZCE", "Others",
 ];
 
+/** Reduced client checklist (meeting: previous list was too long for clients). */
 export const DOCUMENT_CHECKLIST_ITEMS = [
-  { key: "tradeLicense", label: "Trade License Copy" },
-  { key: "chamberOfCommerce", label: "Chamber of Commerce Certificate Copy" },
-  { key: "memorandum", label: "Memorandum of Association Copy" },
-  { key: "ownerEmiratesId", label: "Owner / Partner Emirates ID Copy" },
+  { key: "tradeLicense", label: "Trade License Copy", required: true },
+  { key: "ownerEmiratesId", label: "Owner / Partner Emirates ID Copy", required: true },
   { key: "ownerPassport", label: "Owner / Partner Passport Copy" },
-  { key: "signatoryEmiratesId", label: "Emirates ID Copies of Authorized Signatories" },
-  { key: "signatoryPassport", label: "Passport Copies of Authorized Signatories" },
-  { key: "attestedSignature", label: "Attested Signature Copy / Power of Attorney" },
+  { key: "signatoryEmiratesId", label: "Emirates ID — Authorized Signatories" },
   { key: "securityCheque", label: "Security Cheque", required: true },
-  { key: "advanceCheque", label: "Advance Cheque", required: true },
   { key: "bankStatement", label: "Bank Statement", required: true },
 ] as const;

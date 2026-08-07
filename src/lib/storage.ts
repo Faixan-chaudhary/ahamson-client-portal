@@ -214,3 +214,65 @@ export async function exportPipelineSheet(params: import("./api").PipelineFilter
   a.click();
   URL.revokeObjectURL(url);
 }
+
+export {
+  fetchQuotations as getQuotations,
+  fetchQuotation as getQuotation,
+  fetchQuotationStats as getQuotationStats,
+  createQuotationApi as addQuotation,
+  updateQuotationApi as saveQuotation,
+  quotationAction as runQuotationAction,
+  syncPipelineFromQuotations,
+  fetchPipelineReview as getPipelineReview,
+  fetchSalesActivities as getSalesActivities,
+  createSalesActivityApi as addSalesActivity,
+  updateSalesActivityApi as saveSalesActivity,
+  deleteSalesActivityApi as removeSalesActivity,
+} from "./api";
+
+export async function exportQuotationsSheet(params: import("./api").QuotationFilters = {}): Promise<void> {
+  const { downloadQuotationsExcel } = await import("./api");
+  const blob = await downloadQuotationsExcel(params);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `AHamson-Quotations-${new Date().toISOString().slice(0, 10)}.xlsx`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export function quotationPdfFilename(opts: {
+  id: number;
+  quoteNumber?: string;
+  phase?: string;
+}): string {
+  const number = (opts.quoteNumber || `quote-${opts.id}`).replace(/\//g, "-");
+  const kind = (opts.phase || "").toLowerCase() === "formal" ? "Formal" : "Budgetary";
+  return `AHamson-${kind}-${number}.pdf`;
+}
+
+export async function exportQuotationPdf(
+  id: number,
+  quoteNumber?: string,
+  phase?: string,
+): Promise<void> {
+  const { downloadQuotationPdf } = await import("./api");
+  const blob = await downloadQuotationPdf(id);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = quotationPdfFilename({ id, quoteNumber, phase });
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export async function exportSalesActivitiesSheet(params: import("./api").SalesActivityFilters = {}): Promise<void> {
+  const { downloadSalesActivitiesExcel } = await import("./api");
+  const blob = await downloadSalesActivitiesExcel(params);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `AHamson-Sales-Activities-${new Date().toISOString().slice(0, 10)}.xlsx`;
+  a.click();
+  URL.revokeObjectURL(url);
+}

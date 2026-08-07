@@ -9,6 +9,9 @@ import { DealRegistrationPage } from "@/pages/admin/DealRegistrationPage";
 import { DealDetailPage } from "@/pages/admin/DealDetailPage";
 import { DealLinksPage } from "@/pages/admin/DealLinksPage";
 import { PipelinePage } from "@/pages/admin/PipelinePage";
+import { QuotationsPage } from "@/pages/admin/QuotationsPage";
+import { QuotationDetailPage } from "@/pages/admin/QuotationDetailPage";
+import { SalesActivitiesPage } from "@/pages/admin/SalesActivitiesPage";
 import { UsersPage } from "@/pages/admin/UsersPage";
 import { LinksPage } from "@/pages/admin/LinksPage";
 import { SubmissionDetailPage } from "@/pages/admin/SubmissionDetailPage";
@@ -17,9 +20,16 @@ import { ClientDealFormPage } from "@/pages/client/ClientDealFormPage";
 import { PreviewPage } from "@/pages/client/PreviewPage";
 import { ExpiredPage } from "@/pages/client/ExpiredPage";
 import { ProtectedRoute } from "@/components/portal/ProtectedRoute";
+import { RoleRoute } from "@/components/portal/RoleRoute";
 import { AdminLayout } from "@/components/portal/AdminLayout";
+import { getStoredUser } from "@/lib/auth";
+import { homePathForRole } from "@/lib/permissions";
 import { GOLD } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+
+function AdminHomeRedirect() {
+  return <Navigate to={homePathForRole(getStoredUser()?.role).replace(/^\/admin\/?/, "") || "dashboard"} replace />;
+}
 
 const slideEase = [0.4, 0, 0.2, 1] as const;
 const slideTransition = { type: "tween" as const, duration: 0.58, ease: slideEase };
@@ -91,10 +101,13 @@ export function AnimatedRoutes() {
             <Route path="/admin/login" element={<LoginPage />} />
             <Route path="/admin/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/admin/reset-password" element={<ResetPasswordPage />} />
-            <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
-              <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="/admin" element={<ProtectedRoute><RoleRoute><AdminLayout /></RoleRoute></ProtectedRoute>}>
+              <Route index element={<AdminHomeRedirect />} />
               <Route path="dashboard" element={<DashboardPage />} />
               <Route path="pipeline" element={<PipelinePage />} />
+              <Route path="quotations" element={<QuotationsPage />} />
+              <Route path="quotations/:id" element={<QuotationDetailPage />} />
+              <Route path="sales-activities" element={<SalesActivitiesPage />} />
               <Route path="deal-registration" element={<DealRegistrationPage />} />
               <Route path="deal-links" element={<DealLinksPage />} />
               <Route path="deals/:id" element={<DealDetailPage />} />

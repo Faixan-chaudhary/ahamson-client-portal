@@ -24,7 +24,6 @@ import { formatDateTime } from "@/lib/utils";
 import type { DealRegistration } from "@/lib/types";
 
 const STATUS_OPTIONS = [
-  { value: "all", label: "All Status" },
   { value: "pending", label: "Pending" },
   { value: "opened", label: "Opened" },
   { value: "approved", label: "Approved" },
@@ -36,17 +35,17 @@ interface DealsTableProps {
   deals: DealRegistration[];
   loading?: boolean;
   search: string;
-  statusFilter: string;
+  statusFilter: string[];
   total?: number;
   onSearchChange: (value: string) => void;
-  onStatusChange: (value: string) => void;
+  onStatusChange: (value: string[]) => void;
 }
 
 export function DealsTable({
   deals,
   loading = false,
   search,
-  statusFilter,
+  statusFilter = [],
   total,
   onSearchChange,
   onStatusChange,
@@ -69,7 +68,7 @@ export function DealsTable({
               {
                 key: "status",
                 label: "Status",
-                value: statusFilter,
+                values: statusFilter,
                 options: STATUS_OPTIONS,
                 onChange: onStatusChange,
               },

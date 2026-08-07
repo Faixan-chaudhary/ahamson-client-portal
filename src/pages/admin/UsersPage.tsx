@@ -6,10 +6,12 @@ import { UsersTable } from "@/components/portal/UsersTable";
 import { CreateUserModal } from "@/components/portal/CreateUserModal";
 import { ConfirmDialog } from "@/components/portal/ConfirmDialog";
 import { ApiErrorAlert } from "@/components/portal/ApiErrorAlert";
+import { toFilterParam } from "@/components/portal/TableFiltersPopover";
 import { getUsers, removePortalUser, updatePortalUser } from "@/lib/storage";
 import { useApiQuery } from "@/hooks/useApiQuery";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { isAdmin } from "@/lib/auth";
+import { homePathForRole } from "@/lib/permissions";
 import type { PortalUser } from "@/lib/types";
 
 type UserAction = "block" | "unblock" | "promote" | "demote" | "delete";
@@ -17,19 +19,19 @@ type UserAction = "block" | "unblock" | "promote" | "demote" | "delete";
 export function UsersPage() {
   const [showUserModal, setShowUserModal] = useState(false);
   const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState("all");
+  const [roleFilter, setRoleFilter] = useState<string[]>([]);
   const [actionId, setActionId] = useState<number | null>(null);
   const [pendingAction, setPendingAction] = useState<{ type: UserAction; user: PortalUser } | null>(null);
   const debouncedSearch = useDebouncedValue(search);
 
   const { data, setData, loading, error, refresh } = useApiQuery(
-    () => getUsers({ search: debouncedSearch, role: roleFilter }),
+    () => getUsers({ search: debouncedSearch, role: toFilterParam(roleFilter) }),
     [debouncedSearch, roleFilter],
     isAdmin(),
   );
 
   if (!isAdmin()) {
-    return <Navigate to="/admin/dashboard" replace />;
+    return <Navigate to={homePathForRole()} replace />;
   }
 
   function removeUserLocally(id: number) {
@@ -45,7 +47,7 @@ export function UsersPage() {
   function updateUserLocally(updated: PortalUser) {
     setData(prev => {
       if (!prev) return prev;
-      const matchesFilter = roleFilter === "all" || updated.role === roleFilter;
+      const matchesFilter = roleFilter.length === 0 || roleFilter.includes(updated.role);
       if (!matchesFilter) {
         return {
           items: prev.items.filter(u => u.id !== updated.id),

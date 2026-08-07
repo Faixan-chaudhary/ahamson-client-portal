@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react";
-import { Download, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { ClipboardList, Download, Eye, Pencil, Plus, RefreshCw, Trash2, Workflow } from "lucide-react";
 import { PageHeader } from "@/components/portal/Logo";
 import { Button } from "@/components/portal/Button";
 import { ApiErrorAlert } from "@/components/portal/ApiErrorAlert";
-import { TableFiltersPopover } from "@/components/portal/TableFiltersPopover";
+import { TableFiltersPopover, toFilterParam } from "@/components/portal/TableFiltersPopover";
 import { PipelineEntryModal } from "@/components/portal/PipelineEntryModal";
+import { PipelineEntryViewModal } from "@/components/portal/PipelineEntryViewModal";
+import { PipelineReviewModal } from "@/components/portal/PipelineReviewModal";
 import { ConfirmDialog } from "@/components/portal/ConfirmDialog";
 import {
   DataTable,
@@ -30,10 +32,13 @@ import {
   addPipelineEntry,
   exportPipelineSheet,
   getPipeline,
+  getPipelineReview,
   removePipelineEntry,
   savePipelineEntry,
+  syncPipelineFromQuotations,
 } from "@/lib/storage";
 import type { PipelineEntry, PipelineEntryInput } from "@/lib/types";
+import { can } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 
 function formatDisplayDate(iso?: string | null) {
@@ -50,30 +55,29 @@ function formatMoney(value: string) {
   return `AED ${num.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }
 
-function buildOptions(values: (string | undefined)[], allLabel: string) {
+function buildOptions(values: (string | undefined)[]) {
   const set = new Set(values.filter((v): v is string => Boolean(v)));
-  return [
-    { value: "all", label: allLabel },
-    ...Array.from(set).sort().map(v => ({ value: v, label: v })),
-  ];
+  return Array.from(set).sort().map(v => ({ value: v, label: v }));
 }
 
 export function PipelinePage() {
+  const canMutate = can.mutatePipeline();
+  const canSync = can.syncPipelineFromQuotes();
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [brandFilter, setBrandFilter] = useState("all");
-  const [countryFilter, setCountryFilter] = useState("all");
-  const [spFilter, setSpFilter] = useState("all");
-  const [closureFilter, setClosureFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
+  const [brandFilter, setBrandFilter] = useState<string[]>([]);
+  const [countryFilter, setCountryFilter] = useState<string[]>([]);
+  const [spFilter, setSpFilter] = useState<string[]>([]);
+  const [closureFilter, setClosureFilter] = useState<string[]>([]);
   const debouncedSearch = useDebouncedValue(search);
 
   const filters = {
     search: debouncedSearch,
-    status: statusFilter,
-    brand: brandFilter,
-    country: countryFilter,
-    sp: spFilter,
-    closure: closureFilter,
+    status: toFilterParam(statusFilter),
+    brand: toFilterParam(brandFilter),
+    country: toFilterParam(countryFilter),
+    sp: toFilterParam(spFilter),
+    closure: toFilterParam(closureFilter),
   };
 
   const { data, setData, loading, error, refresh } = useApiQuery(
@@ -85,17 +89,23 @@ export function PipelinePage() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<PipelineEntry | null>(null);
+  const [viewing, setViewing] = useState<PipelineEntry | null>(null);
   const [deleting, setDeleting] = useState<PipelineEntry | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewItems, setReviewItems] = useState<PipelineEntry[]>([]);
+  const [reviewLoading, setReviewLoading] = useState(false);
   const [actionError, setActionError] = useState("");
+  const [actionInfo, setActionInfo] = useState("");
 
   const items = data?.items ?? [];
   const allItems = allData?.items ?? items;
-  const statusOptions = useMemo(() => buildOptions(allItems.map(i => i.status), "All Status"), [allItems]);
-  const brandOptions = useMemo(() => buildOptions(allItems.map(i => i.brand), "All Brands"), [allItems]);
-  const countryOptions = useMemo(() => buildOptions(allItems.map(i => i.country), "All Countries"), [allItems]);
-  const spOptions = useMemo(() => buildOptions(allItems.map(i => i.sp), "All SP"), [allItems]);
-  const closureOptions = useMemo(() => buildOptions(allItems.map(i => i.closure), "All Closure"), [allItems]);
+  const statusOptions = useMemo(() => buildOptions(allItems.map(i => i.status)), [allItems]);
+  const brandOptions = useMemo(() => buildOptions(allItems.map(i => i.brand)), [allItems]);
+  const countryOptions = useMemo(() => buildOptions(allItems.map(i => i.country)), [allItems]);
+  const spOptions = useMemo(() => buildOptions(allItems.map(i => i.sp)), [allItems]);
+  const closureOptions = useMemo(() => buildOptions(allItems.map(i => i.closure)), [allItems]);
 
   type PipelineList = { items: PipelineEntry[]; total: number };
 
@@ -151,14 +161,61 @@ export function PipelinePage() {
     }
   }
 
+  async function handleSyncFromQuotes() {
+    setSyncing(true);
+    setActionError("");
+    setActionInfo("");
+    try {
+      const result = await syncPipelineFromQuotations();
+      setActionInfo(result.message);
+      refresh();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Failed to sync from quotations");
+    } finally {
+      setSyncing(false);
+    }
+  }
+
+  async function handleOpenReview() {
+    setReviewOpen(true);
+    setReviewLoading(true);
+    setActionError("");
+    try {
+      const pack = await getPipelineReview();
+      setReviewItems(pack.items);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Failed to load review pack");
+      setReviewOpen(false);
+    } finally {
+      setReviewLoading(false);
+    }
+  }
+
   return (
     <div className="h-full min-h-0 flex flex-col overflow-hidden">
       <div className="flex-shrink-0">
         <PageHeader
           title="Sales Pipeline"
-          subtitle="AHamson pipeline tracker — view online and download as Excel template"
+          subtitle="Editable tracker + system sync from quotations for manager reviews"
         >
           <div className="flex items-center gap-2 flex-wrap justify-end">
+            <Button
+              variant="outline"
+              icon={<ClipboardList className="w-4 h-4" />}
+              onClick={handleOpenReview}
+            >
+              Pipeline Review
+            </Button>
+            {canSync && (
+              <Button
+                variant="outline"
+                icon={syncing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Workflow className="w-4 h-4" />}
+                onClick={handleSyncFromQuotes}
+                disabled={syncing}
+              >
+                {syncing ? "Syncing…" : "Sync from Quotes"}
+              </Button>
+            )}
             <Button
               variant="outline"
               icon={exporting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
@@ -167,20 +224,27 @@ export function PipelinePage() {
             >
               {exporting ? "Preparing…" : "Download Excel"}
             </Button>
-            <Button
-              variant="gold"
-              icon={<Plus className="w-4 h-4" />}
-              onClick={() => { setEditing(null); setModalOpen(true); }}
-            >
-              Add Entry
-            </Button>
+            {canMutate && (
+              <Button
+                variant="gold"
+                icon={<Plus className="w-4 h-4" />}
+                onClick={() => { setEditing(null); setModalOpen(true); }}
+              >
+                Add Entry
+              </Button>
+            )}
           </div>
         </PageHeader>
       </div>
 
       <div className="flex-1 min-h-0 flex flex-col p-3 sm:p-4 lg:p-5 w-full gap-3 overflow-hidden">
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 space-y-2">
           <ApiErrorAlert message={error || actionError || null} onRetry={refresh} />
+          {actionInfo && (
+            <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2">
+              {actionInfo}
+            </p>
+          )}
         </div>
 
         <DataTableCard className="flex-1 min-h-0 flex flex-col overflow-hidden">
@@ -194,11 +258,11 @@ export function PipelinePage() {
               <TableFiltersPopover
                 title="Filter pipeline"
                 fields={[
-                  { key: "brand", label: "Brand", value: brandFilter, options: brandOptions, onChange: setBrandFilter },
-                  { key: "status", label: "Status", value: statusFilter, options: statusOptions, onChange: setStatusFilter },
-                  { key: "country", label: "Country", value: countryFilter, options: countryOptions, onChange: setCountryFilter },
-                  { key: "sp", label: "SP", value: spFilter, options: spOptions, onChange: setSpFilter },
-                  { key: "closure", label: "Closure", value: closureFilter, options: closureOptions, onChange: setClosureFilter },
+                  { key: "brand", label: "Brand", values: brandFilter, options: brandOptions, onChange: setBrandFilter },
+                  { key: "status", label: "Status", values: statusFilter, options: statusOptions, onChange: setStatusFilter },
+                  { key: "country", label: "Country", values: countryFilter, options: countryOptions, onChange: setCountryFilter },
+                  { key: "sp", label: "SP", values: spFilter, options: spOptions, onChange: setSpFilter },
+                  { key: "closure", label: "Closure", values: closureFilter, options: closureOptions, onChange: setClosureFilter },
                 ]}
               />
             </DataTableFilters>
@@ -277,15 +341,22 @@ export function PipelinePage() {
                     </DataTableTd>
                     <DataTableTd>
                       <DataTableActions>
-                        <DataTableIconButton
-                          title="Edit"
-                          onClick={() => { setEditing(row); setModalOpen(true); }}
-                        >
-                          <Pencil className="w-3.5 h-3.5" />
+                        <DataTableIconButton title="View details" onClick={() => setViewing(row)}>
+                          <Eye className="w-3.5 h-3.5" />
                         </DataTableIconButton>
-                        <DataTableIconButton title="Delete" onClick={() => setDeleting(row)}>
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </DataTableIconButton>
+                        {canMutate && (
+                          <>
+                            <DataTableIconButton
+                              title="Edit"
+                              onClick={() => { setEditing(row); setModalOpen(true); }}
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </DataTableIconButton>
+                            <DataTableIconButton title="Delete" onClick={() => setDeleting(row)}>
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </DataTableIconButton>
+                          </>
+                        )}
                       </DataTableActions>
                     </DataTableTd>
                   </DataTableRow>
@@ -301,6 +372,28 @@ export function PipelinePage() {
         entry={editing}
         onClose={() => { setModalOpen(false); setEditing(null); }}
         onSave={handleSave}
+      />
+
+      <PipelineEntryViewModal
+        open={!!viewing}
+        entry={viewing}
+        onClose={() => setViewing(null)}
+        onEdit={canMutate ? (entry) => {
+          setViewing(null);
+          setEditing(entry);
+          setModalOpen(true);
+        } : undefined}
+      />
+
+      <PipelineReviewModal
+        open={reviewOpen}
+        items={reviewItems}
+        loading={reviewLoading}
+        onClose={() => setReviewOpen(false)}
+        onOpenEntry={(entry) => {
+          setReviewOpen(false);
+          setViewing(entry);
+        }}
       />
 
       <ConfirmDialog

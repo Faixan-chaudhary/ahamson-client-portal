@@ -1,27 +1,39 @@
 import { useEffect, useRef, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
-import { LayoutDashboard, Link2, LogOut, Menu, ClipboardPen, ShieldCheck, Table2, UserCog, Users, X } from "lucide-react";
+import { CalendarDays, LayoutDashboard, Link2, LogOut, Menu, ClipboardPen, FileText, ShieldCheck, Table2, UserCog, Users, X } from "lucide-react";
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Logo } from "./Logo";
 import { GOLD, GOLD_DARK, GOLD_DARKER } from "@/lib/constants";
-import { getStoredUser, clearSession, roleLabel, getToken, setSession, isAdmin } from "@/lib/auth";
+import { getStoredUser, clearSession, roleLabel, getToken, setSession } from "@/lib/auth";
 import { getMe } from "@/lib/api";
+import { canAccessModule, type AppModule } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { useIsDesktopNav } from "@/hooks/useMediaQuery";
 
-const navItems = [
-  { to: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard", end: true, order: 0 },
-  { to: "/admin/pipeline", icon: Table2, label: "Pipeline", end: true, order: 1 },
-  { to: "/admin/deal-links", icon: ClipboardPen, label: "Deal Links", end: true, order: 2 },
-  { to: "/admin/links", icon: Link2, label: "Document Links", end: true, order: 3 },
-  { to: "/admin/users", icon: Users, label: "Team Users", end: true, order: 4, adminOnly: true },
+const navItems: {
+  to: string;
+  icon: typeof LayoutDashboard;
+  label: string;
+  end: boolean;
+  order: number;
+  module: AppModule;
+}[] = [
+  { to: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard", end: true, order: 0, module: "dashboard" },
+  { to: "/admin/pipeline", icon: Table2, label: "Pipeline", end: true, order: 1, module: "pipeline" },
+  { to: "/admin/quotations", icon: FileText, label: "Quotations", end: true, order: 2, module: "quotations" },
+  { to: "/admin/sales-activities", icon: CalendarDays, label: "Sales Activities", end: true, order: 3, module: "sales-activities" },
+  { to: "/admin/deal-links", icon: ClipboardPen, label: "Deal Links", end: true, order: 4, module: "deal-links" },
+  { to: "/admin/links", icon: Link2, label: "Document Links", end: true, order: 5, module: "links" },
+  { to: "/admin/users", icon: Users, label: "Team Users", end: true, order: 6, module: "users" },
 ];
 
 function tabOrder(pathname: string) {
-  if (pathname.includes("/users")) return 4;
-  if (pathname.includes("/links") && !pathname.includes("deal-links")) return 3;
-  if (pathname.includes("/deal-links") || pathname.includes("/deal-registration") || pathname.includes("/deals/")) return 2;
+  if (pathname.includes("/users")) return 6;
+  if (pathname.includes("/links") && !pathname.includes("deal-links")) return 5;
+  if (pathname.includes("/deal-links") || pathname.includes("/deal-registration") || pathname.includes("/deals/")) return 4;
+  if (pathname.includes("/sales-activities")) return 3;
+  if (pathname.includes("/quotations")) return 2;
   if (pathname.includes("/pipeline")) return 1;
   return 0;
 }
@@ -49,8 +61,7 @@ function AdminSidebar({
 }) {
   const navigate = useNavigate();
   const user = getStoredUser();
-  const admin = isAdmin();
-  const nav = navItems.filter(item => !item.adminOnly || admin);
+  const nav = navItems.filter(item => canAccessModule(item.module, user?.role));
   const initials = user?.name?.split(" ").map(p => p[0]).join("").slice(0, 2).toUpperCase() || "AD";
 
   useEffect(() => {

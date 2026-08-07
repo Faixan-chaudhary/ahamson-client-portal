@@ -273,12 +273,221 @@ class PipelineEntryOut(ApiModel):
     probability: str = ""
     status: str = ""
     details: str = ""
+    activity_logs: list[Any] = Field(default_factory=list)
     created_at: str = ""
     updated_at: str = ""
 
 
 class PipelineListResponse(ApiModel):
     items: list[PipelineEntryOut]
+    total: int
+
+
+class QuotationCreate(ApiModel):
+    quotation_date: str = ""
+    sales_person: str = ""
+    partner: str = ""
+    end_user: str = ""
+    country: str = ""
+    brand: str = ""
+    products: str = ""
+    deal_value: str = ""
+    gp_value: str = ""
+    contact_person: str = ""
+    closure_date: str = ""
+    probability: str = ""
+    details: str = ""
+    si_attachment_name: str = ""
+    si_attachment_note: str = ""
+
+
+class QuotationUpdate(ApiModel):
+    quotation_date: str | None = None
+    sales_person: str | None = None
+    partner: str | None = None
+    end_user: str | None = None
+    country: str | None = None
+    brand: str | None = None
+    products: str | None = None
+    deal_value: str | None = None
+    gp_value: str | None = None
+    contact_person: str | None = None
+    closure_date: str | None = None
+    probability: str | None = None
+    details: str | None = None
+    si_attachment_name: str | None = None
+    si_attachment_note: str | None = None
+    oem: str | None = None
+    order_date: str | None = None
+    order_details: str | None = None
+    expected_delivery_date: str | None = None
+    po_file_name: str | None = None
+    po_note: str | None = None
+
+
+class QuotationSubmit(ApiModel):
+    submission_date: str = ""
+    remarks: str = ""
+
+
+class QuotationFollowUpCreate(ApiModel):
+    followup_date: str = ""
+    remarks: str = Field(min_length=1)
+
+
+class QuotationCloseLost(ApiModel):
+    closure_date: str = ""
+    reason: str = Field(min_length=1)
+    remarks: str = ""
+
+
+class QuotationApprovalAction(ApiModel):
+    date: str = ""
+    action: str = Field(min_length=1)  # approve | send_back | reject
+    remarks: str = ""
+
+
+class QuotationOrderDraft(ApiModel):
+    po_file_name: str = ""
+    po_note: str = ""
+    oem: str = ""
+    order_date: str = ""
+    order_details: str = ""
+    expected_delivery_date: str = ""
+
+
+class QuotationDelivery(ApiModel):
+    invoice_file_name: str = ""
+    delivery_docs_note: str = ""
+    delivery_date: str = ""
+    remarks: str = ""
+
+
+class QuotationPaymentClose(ApiModel):
+    payment_received_date: str = ""
+    payment_docs_note: str = ""
+    remarks: str = ""
+
+
+class QuotationOut(ApiModel):
+    id: int
+    quote_number: str
+    phase: str
+    status: str
+    quotation_date: str = ""
+    sales_person: str = ""
+    partner: str = ""
+    end_user: str = ""
+    country: str = ""
+    brand: str = ""
+    products: str = ""
+    deal_value: str = ""
+    gp_value: str = ""
+    contact_person: str = ""
+    closure_date: str = ""
+    probability: str = ""
+    details: str = ""
+    si_attachment_name: str = ""
+    si_attachment_note: str = ""
+    quotation_submission_date: str = ""
+    closure_reason: str = ""
+    closure_remarks: str = ""
+    parent_quote_id: int | None = None
+    child_quote_id: int | None = None
+    parent_quote_number: str = ""
+    child_quote_number: str = ""
+    formal_submission_date: str = ""
+    po_file_name: str = ""
+    po_note: str = ""
+    oem: str = ""
+    order_date: str = ""
+    order_details: str = ""
+    expected_delivery_date: str = ""
+    order_submission_date: str = ""
+    order_remarks: str = ""
+    invoice_file_name: str = ""
+    delivery_docs_note: str = ""
+    delivery_date: str = ""
+    delivery_remarks: str = ""
+    payment_received_date: str = ""
+    payment_docs_note: str = ""
+    payment_remarks: str = ""
+    followups: list[Any] = Field(default_factory=list)
+    approvals: list[Any] = Field(default_factory=list)
+    activity_logs: list[Any] = Field(default_factory=list)
+    allowed_actions: list[str] = Field(default_factory=list)
+    action_hint: str = ""
+    created_at: str = ""
+    updated_at: str = ""
+    created_by_id: int | None = None
+
+
+class QuotationListResponse(ApiModel):
+    items: list[QuotationOut]
+    total: int
+
+
+class QuotationStatusCount(ApiModel):
+    status: str
+    count: int
+
+
+class QuotationStatsResponse(ApiModel):
+    total: int = 0
+    open: int = 0
+    submitted: int = 0
+    lost: int = 0
+    closed: int = 0
+    pending_finance: int = 0
+    pending_sales_head: int = 0
+    pending_sales: int = 0
+    my_queue: int = 0
+    by_phase: dict[str, int] = Field(default_factory=dict)
+    by_status: list[QuotationStatusCount] = Field(default_factory=list)
+
+
+class PipelineSyncResponse(ApiModel):
+    created: int = 0
+    updated: int = 0
+    skipped: int = 0
+    total_pipeline: int = 0
+    message: str = ""
+
+
+class SalesActivityCreate(ApiModel):
+    sales_person: str = ""
+    customer_name: str = ""
+    meeting_date: str = ""
+    contact_person: str = ""
+    contact_number: str = ""
+    meeting_outputs: str = ""
+
+
+class SalesActivityUpdate(ApiModel):
+    sales_person: str | None = None
+    customer_name: str | None = None
+    meeting_date: str | None = None
+    contact_person: str | None = None
+    contact_number: str | None = None
+    meeting_outputs: str | None = None
+
+
+class SalesActivityOut(ApiModel):
+    id: int
+    sales_person: str = ""
+    customer_name: str = ""
+    meeting_date: str = ""
+    contact_person: str = ""
+    contact_number: str = ""
+    meeting_outputs: str = ""
+    activity_logs: list[Any] = Field(default_factory=list)
+    created_at: str = ""
+    updated_at: str = ""
+    created_by_id: int | None = None
+
+
+class SalesActivityListResponse(ApiModel):
+    items: list[SalesActivityOut]
     total: int
 
 

@@ -59,6 +59,42 @@ def require_admin(user: User = Depends(get_current_user)) -> User:
     return user
 
 
+# Module access mirrors frontend permissions.ts
+ROLE_MODULES: dict[str, set[str]] = {
+    "admin": {"dashboard", "pipeline", "quotations", "sales-activities", "deal-links", "links", "users"},
+    "manager": {"pipeline", "quotations", "sales-activities", "deal-links"},
+    "finance_manager": {"quotations", "pipeline"},
+    "sales_head": {"pipeline", "quotations", "sales-activities"},
+    "staff": {"pipeline", "quotations"},
+}
+
+
+def require_module(module: str):
+    """FastAPI dependency factory — blocks roles that cannot access a module."""
+
+    def _dep(user: User = Depends(get_current_user)) -> User:
+        if user.role == "admin":
+            return user
+        allowed = ROLE_MODULES.get(user.role or "", set())
+        if module not in allowed:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Your role cannot access {module}",
+            )
+        return user
+
+    return _dep
+
+
+def require_roles(*roles: str):
+    def _dep(user: User = Depends(get_current_user)) -> User:
+        if user.role == "admin" or user.role in roles:
+            return user
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not allowed for this action")
+
+    return _dep
+
+
 def iso(dt: datetime | None) -> str | None:
     if dt is None:
         return None

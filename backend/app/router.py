@@ -5,14 +5,50 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.middleware import admin_rate_limiter, auth_rate_limiter, client_rate_limiter, enforce_rate_limit
-from app.models import User
+from app.models import Quotation, User
 from app.config import get_settings
 from app.pipeline import (
     create_pipeline_entry,
     delete_pipeline_entry,
     export_pipeline_excel,
     query_pipeline,
+    review_pipeline,
+    sync_pipeline_from_quotations,
     update_pipeline_entry,
+)
+from app.quotation_export import (
+    build_quotation_pdf,
+    export_quotations_excel,
+    pdf_filename_for,
+    quotation_stats,
+)
+from app.quotations import (
+    add_followup,
+    close_budgetary_lost,
+    close_deal_paid,
+    close_formal_lost,
+    create_budgetary_quotation,
+    draft_oem_order,
+    finance_review,
+    get_quotation,
+    list_quotations,
+    mark_delivered,
+    place_order_oem,
+    reopen_after_reject,
+    sales_head_review,
+    start_formal_from_budgetary,
+    submit_budgetary,
+    submit_formal_for_approval,
+    submit_formal_to_si,
+    submit_order_for_approval,
+    update_quotation,
+)
+from app.sales_activities import (
+    create_sales_activity,
+    delete_sales_activity,
+    export_sales_activities_excel,
+    list_sales_activities,
+    update_sales_activity,
 )
 from app.schemas import (
     AppConfigResponse,
@@ -37,7 +73,24 @@ from app.schemas import (
     PipelineEntryOut,
     PipelineEntryUpdate,
     PipelineListResponse,
+    PipelineSyncResponse,
+    QuotationApprovalAction,
+    QuotationCloseLost,
+    QuotationCreate,
+    QuotationDelivery,
+    QuotationFollowUpCreate,
+    QuotationListResponse,
+    QuotationOrderDraft,
+    QuotationOut,
+    QuotationPaymentClose,
+    QuotationStatsResponse,
+    QuotationSubmit,
+    QuotationUpdate,
     ResetPasswordRequest,
+    SalesActivityCreate,
+    SalesActivityListResponse,
+    SalesActivityOut,
+    SalesActivityUpdate,
     SubmissionOut,
     SubmissionsListResponse,
     TokenResponse,
@@ -46,7 +99,14 @@ from app.schemas import (
     UserCreate,
     UserUpdate,
 )
-from app.security import create_access_token, get_current_user, require_admin, verify_password
+from app.security import (
+    create_access_token,
+    get_current_user,
+    require_admin,
+    require_module,
+    require_roles,
+    verify_password,
+)
 from app.services import (
     create_deal_link,
     create_deal_registration,
@@ -218,7 +278,7 @@ def delete_user_route(
 
 
 @router.get("/dashboard", response_model=DashboardResponse)
-def dashboard(request: Request, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def dashboard(request: Request, _: User = Depends(require_module("dashboard")), db: Session = Depends(get_db)):
     admin_rate_limit(request)
     return get_dashboard(db)
 
@@ -226,7 +286,7 @@ def dashboard(request: Request, _: User = Depends(get_current_user), db: Session
 @router.get("/submissions", response_model=SubmissionsListResponse)
 def submissions(
     request: Request,
-    _: User = Depends(get_current_user),
+    _: User = Depends(require_module("links")),
     db: Session = Depends(get_db),
     search: str | None = Query(default=None),
     status: str | None = Query(default=None),
@@ -238,7 +298,7 @@ def submissions(
 @router.get("/links", response_model=DocumentLinksListResponse)
 def document_links(
     request: Request,
-    _: User = Depends(get_current_user),
+    _: User = Depends(require_module("links")),
     db: Session = Depends(get_db),
     search: str | None = Query(default=None),
     status: str | None = Query(default=None),
@@ -250,7 +310,7 @@ def document_links(
 
 
 @router.get("/submissions/{submission_id}", response_model=SubmissionOut)
-def submission_detail(submission_id: str, request: Request, _: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def submission_detail(submission_id: str, request: Request, _: User = Depends(require_module("links")), db: Session = Depends(get_db)):
     admin_rate_limit(request)
     return get_submission_by_id(db, submission_id, include_form=True)
 
@@ -259,7 +319,7 @@ def submission_detail(submission_id: str, request: Request, _: User = Depends(ge
 def create_submission(
     payload: CreateLinkRequest,
     request: Request,
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_module("links")),
     db: Session = Depends(get_db),
     x_client_origin: str | None = Header(default=None),
 ):
@@ -274,7 +334,7 @@ def update_approval(
     submission_id: str,
     request: Request,
     payload: InternalApprovalData,
-    _: User = Depends(get_current_user),
+    _: User = Depends(require_module("links")),
     db: Session = Depends(get_db),
 ):
     admin_rate_limit(request)
@@ -323,7 +383,7 @@ def client_preview(token: str, request: Request, db: Session = Depends(get_db)):
 @router.get("/deals", response_model=DealRegistrationsListResponse)
 def list_deals(
     request: Request,
-    _: User = Depends(get_current_user),
+    _: User = Depends(require_module("deal-links")),
     db: Session = Depends(get_db),
     search: str | None = Query(default=None),
     status: str | None = Query(default=None),
@@ -335,7 +395,7 @@ def list_deals(
 @router.get("/deal-links", response_model=DealLinksListResponse)
 def deal_links(
     request: Request,
-    _: User = Depends(get_current_user),
+    _: User = Depends(require_module("deal-links")),
     db: Session = Depends(get_db),
     search: str | None = Query(default=None),
     status: str | None = Query(default=None),
@@ -350,7 +410,7 @@ def deal_links(
 def create_deal_share_link(
     payload: CreateDealLinkRequest,
     request: Request,
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_module("deal-links")),
     db: Session = Depends(get_db),
     x_client_origin: str | None = Header(default=None),
 ):
@@ -396,7 +456,7 @@ def client_deal_submit(token: str, payload: dict, request: Request, db: Session 
 def create_deal(
     payload: DealRegistrationCreate,
     request: Request,
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_module("deal-links")),
     db: Session = Depends(get_db),
 ):
     admin_rate_limit(request)
@@ -406,7 +466,7 @@ def create_deal(
 def deal_detail(
     deal_id: str,
     request: Request,
-    _: User = Depends(get_current_user),
+    _: User = Depends(require_module("deal-links")),
     db: Session = Depends(get_db),
 ):
     admin_rate_limit(request)
@@ -418,7 +478,7 @@ def deal_status_update(
     deal_id: str,
     payload: DealRegistrationStatusUpdate,
     request: Request,
-    _: User = Depends(get_current_user),
+    _: User = Depends(require_module("deal-links")),
     db: Session = Depends(get_db),
 ):
     admin_rate_limit(request)
@@ -428,7 +488,7 @@ def deal_status_update(
 @router.get("/pipeline", response_model=PipelineListResponse)
 def list_pipeline(
     request: Request,
-    _: User = Depends(get_current_user),
+    user: User = Depends(require_module("pipeline")),
     db: Session = Depends(get_db),
     search: str | None = Query(default=None),
     status: str | None = Query(default=None),
@@ -440,14 +500,14 @@ def list_pipeline(
     admin_rate_limit(request)
     return query_pipeline(
         db, search=search, status_filter=status, brand=brand,
-        country=country, sp=sp, closure=closure,
+        country=country, sp=sp, closure=closure, user=user,
     )
 
 
 @router.get("/pipeline/export")
 def download_pipeline(
     request: Request,
-    _: User = Depends(get_current_user),
+    _: User = Depends(require_module("pipeline")),
     db: Session = Depends(get_db),
     search: str | None = Query(default=None),
     status: str | None = Query(default=None),
@@ -473,7 +533,7 @@ def download_pipeline(
 def create_pipeline(
     payload: PipelineEntryCreate,
     request: Request,
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_roles("manager", "sales_head")),
     db: Session = Depends(get_db),
 ):
     admin_rate_limit(request)
@@ -485,20 +545,387 @@ def patch_pipeline(
     entry_id: int,
     payload: PipelineEntryUpdate,
     request: Request,
-    _: User = Depends(get_current_user),
+    user: User = Depends(require_roles("manager", "sales_head")),
     db: Session = Depends(get_db),
 ):
     admin_rate_limit(request)
-    return update_pipeline_entry(db, entry_id, payload)
+    return update_pipeline_entry(db, entry_id, payload, user=user)
 
 
 @router.delete("/pipeline/{entry_id}", response_model=MessageResponse)
 def remove_pipeline(
     entry_id: int,
     request: Request,
-    _: User = Depends(get_current_user),
+    _: User = Depends(require_roles("manager", "sales_head")),
     db: Session = Depends(get_db),
 ):
     admin_rate_limit(request)
     delete_pipeline_entry(db, entry_id)
+    return MessageResponse(message="deleted")
+
+
+@router.post("/pipeline/sync-from-quotations", response_model=PipelineSyncResponse)
+def post_pipeline_sync(
+    request: Request,
+    user: User = Depends(require_roles("manager", "sales_head")),
+    db: Session = Depends(get_db),
+):
+    """Generate/update pipeline rows from open quotations (review base)."""
+    admin_rate_limit(request)
+    return sync_pipeline_from_quotations(db, user)
+
+
+@router.get("/pipeline/review", response_model=PipelineListResponse)
+def get_pipeline_review(
+    request: Request,
+    user: User = Depends(require_module("pipeline")),
+    db: Session = Depends(get_db),
+):
+    """Pipeline review pack — open deals for manager presentation."""
+    admin_rate_limit(request)
+    return review_pipeline(db, user)
+
+
+# --- Quotation workflow (Budgetary + Formal) ---
+
+@router.get("/quotations", response_model=QuotationListResponse)
+def get_quotations(
+    request: Request,
+    user: User = Depends(require_module("quotations")),
+    db: Session = Depends(get_db),
+    search: str | None = Query(default=None),
+    status: str | None = Query(default=None),
+    phase: str | None = Query(default=None),
+    queue: str | None = Query(default=None),
+):
+    admin_rate_limit(request)
+    return list_quotations(
+        db, search=search, status_filter=status, phase=phase, queue=queue, user=user,
+    )
+
+
+@router.get("/quotations/stats", response_model=QuotationStatsResponse)
+def get_quotation_stats(
+    request: Request,
+    user: User = Depends(require_module("quotations")),
+    db: Session = Depends(get_db),
+):
+    admin_rate_limit(request)
+    data = quotation_stats(db, user=user)
+    return QuotationStatsResponse(**data)
+
+
+@router.get("/quotations/export")
+def download_quotations(
+    request: Request,
+    user: User = Depends(require_module("quotations")),
+    db: Session = Depends(get_db),
+    search: str | None = Query(default=None),
+    status: str | None = Query(default=None),
+    phase: str | None = Query(default=None),
+):
+    admin_rate_limit(request)
+    content = export_quotations_excel(
+        db, search=search, status_filter=status, phase=phase, user=user,
+    )
+    filename = f"AHamson-Quotations-{datetime.now(UTC).strftime('%Y%m%d')}.xlsx"
+    return Response(
+        content=content,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.post("/quotations", response_model=QuotationOut)
+def post_quotation(
+    payload: QuotationCreate,
+    request: Request,
+    user: User = Depends(require_roles("manager")),
+    db: Session = Depends(get_db),
+):
+    admin_rate_limit(request)
+    return create_budgetary_quotation(db, payload, user)
+
+
+@router.get("/quotations/{quote_id}/pdf")
+def download_quotation_pdf(
+    quote_id: int,
+    request: Request,
+    _: User = Depends(require_module("quotations")),
+    db: Session = Depends(get_db),
+):
+    admin_rate_limit(request)
+    row = db.query(Quotation).filter(Quotation.id == quote_id).first()
+    if not row:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Quotation not found")
+    linked_number = None
+    if row.parent_quote_id:
+        parent = db.query(Quotation).filter(Quotation.id == row.parent_quote_id).first()
+        linked_number = parent.quote_number if parent else None
+    elif (row.phase or "").lower() == "budgetary":
+        child = db.query(Quotation).filter(Quotation.parent_quote_id == row.id).first()
+        linked_number = child.quote_number if child else None
+    content = build_quotation_pdf(row, linked_quote_number=linked_number)
+    filename = pdf_filename_for(row)
+    return Response(
+        content=content,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/quotations/{quote_id}", response_model=QuotationOut)
+def get_quotation_detail(
+    quote_id: int,
+    request: Request,
+    user: User = Depends(require_module("quotations")),
+    db: Session = Depends(get_db),
+):
+    admin_rate_limit(request)
+    return get_quotation(db, quote_id, user=user)
+
+
+@router.patch("/quotations/{quote_id}", response_model=QuotationOut)
+def patch_quotation(
+    quote_id: int,
+    payload: QuotationUpdate,
+    request: Request,
+    user: User = Depends(require_module("quotations")),
+    db: Session = Depends(get_db),
+):
+    admin_rate_limit(request)
+    return update_quotation(db, quote_id, payload, user)
+
+
+@router.post("/quotations/{quote_id}/submit-budgetary", response_model=QuotationOut)
+def post_submit_budgetary(
+    quote_id: int,
+    payload: QuotationSubmit,
+    request: Request,
+    user: User = Depends(require_module("quotations")),
+    db: Session = Depends(get_db),
+):
+    admin_rate_limit(request)
+    return submit_budgetary(db, quote_id, payload, user)
+
+
+@router.post("/quotations/{quote_id}/followups", response_model=QuotationOut)
+def post_followup(
+    quote_id: int,
+    payload: QuotationFollowUpCreate,
+    request: Request,
+    user: User = Depends(require_module("quotations")),
+    db: Session = Depends(get_db),
+):
+    admin_rate_limit(request)
+    return add_followup(db, quote_id, payload, user)
+
+
+@router.post("/quotations/{quote_id}/close-lost", response_model=QuotationOut)
+def post_close_lost(
+    quote_id: int,
+    payload: QuotationCloseLost,
+    request: Request,
+    user: User = Depends(require_module("quotations")),
+    db: Session = Depends(get_db),
+):
+    admin_rate_limit(request)
+    row = get_quotation(db, quote_id)
+    if row.phase == "formal":
+        return close_formal_lost(db, quote_id, payload, user)
+    return close_budgetary_lost(db, quote_id, payload, user)
+
+
+@router.post("/quotations/{quote_id}/start-formal", response_model=QuotationOut)
+def post_start_formal(
+    quote_id: int,
+    request: Request,
+    user: User = Depends(require_module("quotations")),
+    db: Session = Depends(get_db),
+):
+    admin_rate_limit(request)
+    return start_formal_from_budgetary(db, quote_id, user)
+
+
+@router.post("/quotations/{quote_id}/reopen-revisions", response_model=QuotationOut)
+def post_reopen_revisions(
+    quote_id: int,
+    request: Request,
+    user: User = Depends(require_module("quotations")),
+    db: Session = Depends(get_db),
+):
+    admin_rate_limit(request)
+    return reopen_after_reject(db, quote_id, user)
+
+
+@router.post("/quotations/{quote_id}/submit-finance", response_model=QuotationOut)
+def post_submit_finance(
+    quote_id: int,
+    request: Request,
+    user: User = Depends(require_module("quotations")),
+    db: Session = Depends(get_db),
+):
+    admin_rate_limit(request)
+    return submit_formal_for_approval(db, quote_id, user)
+
+
+@router.post("/quotations/{quote_id}/finance-review", response_model=QuotationOut)
+def post_finance_review(
+    quote_id: int,
+    payload: QuotationApprovalAction,
+    request: Request,
+    user: User = Depends(require_module("quotations")),
+    db: Session = Depends(get_db),
+):
+    admin_rate_limit(request)
+    return finance_review(db, quote_id, payload, user)
+
+
+@router.post("/quotations/{quote_id}/submit-formal", response_model=QuotationOut)
+def post_submit_formal(
+    quote_id: int,
+    payload: QuotationSubmit,
+    request: Request,
+    user: User = Depends(require_module("quotations")),
+    db: Session = Depends(get_db),
+):
+    admin_rate_limit(request)
+    return submit_formal_to_si(db, quote_id, payload, user)
+
+
+@router.post("/quotations/{quote_id}/oem-draft", response_model=QuotationOut)
+def post_oem_draft(
+    quote_id: int,
+    payload: QuotationOrderDraft,
+    request: Request,
+    user: User = Depends(require_module("quotations")),
+    db: Session = Depends(get_db),
+):
+    admin_rate_limit(request)
+    return draft_oem_order(db, quote_id, payload, user)
+
+
+@router.post("/quotations/{quote_id}/submit-order-approval", response_model=QuotationOut)
+def post_submit_order_approval(
+    quote_id: int,
+    request: Request,
+    user: User = Depends(require_module("quotations")),
+    db: Session = Depends(get_db),
+):
+    admin_rate_limit(request)
+    return submit_order_for_approval(db, quote_id, user)
+
+
+@router.post("/quotations/{quote_id}/sales-head-review", response_model=QuotationOut)
+def post_sales_head_review(
+    quote_id: int,
+    payload: QuotationApprovalAction,
+    request: Request,
+    user: User = Depends(require_module("quotations")),
+    db: Session = Depends(get_db),
+):
+    admin_rate_limit(request)
+    return sales_head_review(db, quote_id, payload, user)
+
+
+@router.post("/quotations/{quote_id}/place-oem-order", response_model=QuotationOut)
+def post_place_oem(
+    quote_id: int,
+    payload: QuotationSubmit,
+    request: Request,
+    user: User = Depends(require_module("quotations")),
+    db: Session = Depends(get_db),
+):
+    admin_rate_limit(request)
+    return place_order_oem(db, quote_id, payload, user)
+
+
+@router.post("/quotations/{quote_id}/deliver", response_model=QuotationOut)
+def post_deliver(
+    quote_id: int,
+    payload: QuotationDelivery,
+    request: Request,
+    user: User = Depends(require_module("quotations")),
+    db: Session = Depends(get_db),
+):
+    admin_rate_limit(request)
+    return mark_delivered(db, quote_id, payload, user)
+
+
+@router.post("/quotations/{quote_id}/close-deal", response_model=QuotationOut)
+def post_close_deal(
+    quote_id: int,
+    payload: QuotationPaymentClose,
+    request: Request,
+    user: User = Depends(require_module("quotations")),
+    db: Session = Depends(get_db),
+):
+    admin_rate_limit(request)
+    return close_deal_paid(db, quote_id, payload, user)
+
+
+# --- Sales Activities (Excel template export) ---
+
+@router.get("/sales-activities", response_model=SalesActivityListResponse)
+def get_sales_activities(
+    request: Request,
+    user: User = Depends(require_module("sales-activities")),
+    db: Session = Depends(get_db),
+    search: str | None = Query(default=None),
+    sales_person: str | None = Query(default=None),
+):
+    admin_rate_limit(request)
+    return list_sales_activities(db, search=search, sales_person=sales_person, user=user)
+
+
+@router.get("/sales-activities/export")
+def download_sales_activities(
+    request: Request,
+    _: User = Depends(require_module("sales-activities")),
+    db: Session = Depends(get_db),
+    search: str | None = Query(default=None),
+    sales_person: str | None = Query(default=None),
+):
+    admin_rate_limit(request)
+    content = export_sales_activities_excel(db, search=search, sales_person=sales_person)
+    filename = f"AHamson-Sales-Activities-{datetime.now(UTC).strftime('%Y%m%d')}.xlsx"
+    return Response(
+        content=content,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.post("/sales-activities", response_model=SalesActivityOut)
+def post_sales_activity(
+    payload: SalesActivityCreate,
+    request: Request,
+    user: User = Depends(require_roles("manager", "sales_head")),
+    db: Session = Depends(get_db),
+):
+    admin_rate_limit(request)
+    return create_sales_activity(db, payload, user)
+
+
+@router.patch("/sales-activities/{activity_id}", response_model=SalesActivityOut)
+def patch_sales_activity(
+    activity_id: int,
+    payload: SalesActivityUpdate,
+    request: Request,
+    user: User = Depends(require_roles("manager", "sales_head")),
+    db: Session = Depends(get_db),
+):
+    admin_rate_limit(request)
+    return update_sales_activity(db, activity_id, payload, user=user)
+
+
+@router.delete("/sales-activities/{activity_id}", response_model=MessageResponse)
+def remove_sales_activity(
+    activity_id: int,
+    request: Request,
+    _: User = Depends(require_roles("manager", "sales_head")),
+    db: Session = Depends(get_db),
+):
+    admin_rate_limit(request)
+    delete_sales_activity(db, activity_id)
     return MessageResponse(message="deleted")

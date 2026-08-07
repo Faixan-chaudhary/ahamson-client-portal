@@ -46,7 +46,7 @@ export function CreateUserModal({ open, onClose, onCreated }: CreateUserModalPro
         name,
         email,
         password,
-        role: role as "admin" | "manager",
+        role: role as "admin" | "manager" | "finance_manager" | "sales_head" | "staff",
       });
       onCreated?.();
       handleClose();
@@ -62,7 +62,7 @@ export function CreateUserModal({ open, onClose, onCreated }: CreateUserModalPro
       open={open}
       onClose={handleClose}
       title="Add Team User"
-      subtitle="Create a manager or administrator account"
+      subtitle="Create Sales Person, Finance Manager, Sales Head, or Admin"
     >
       <form
         className="space-y-4"
@@ -108,9 +108,11 @@ export function CreateUserModal({ open, onClose, onCreated }: CreateUserModalPro
             value={role}
             onChange={setRole}
             options={[
-              { value: "manager", label: "Manager" },
-              { value: "admin", label: "Administrator" },
+              { value: "manager", label: "Sales Person" },
+              { value: "finance_manager", label: "Finance Manager" },
+              { value: "sales_head", label: "Sales Head" },
               { value: "staff", label: "Salicru Staff" },
+              { value: "admin", label: "Administrator" },
             ]}
           />
         </FormField>

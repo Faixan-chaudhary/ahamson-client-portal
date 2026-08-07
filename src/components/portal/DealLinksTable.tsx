@@ -22,7 +22,6 @@ import { formatDateTime } from "@/lib/utils";
 import type { DealLink } from "@/lib/types";
 
 const STATUS_OPTIONS = [
-  { value: "all", label: "All Status" },
   { value: "pending", label: "Pending" },
   { value: "opened", label: "Opened" },
   { value: "expired", label: "Expired" },
@@ -34,17 +33,17 @@ interface DealLinksTableProps {
   links: DealLink[];
   loading?: boolean;
   search: string;
-  statusFilter: string;
+  statusFilter: string[];
   total?: number;
   onSearchChange: (value: string) => void;
-  onStatusChange: (value: string) => void;
+  onStatusChange: (value: string[]) => void;
 }
 
 export function DealLinksTable({
   links,
   loading = false,
   search,
-  statusFilter,
+  statusFilter = [],
   total,
   onSearchChange,
   onStatusChange,
@@ -67,7 +66,7 @@ export function DealLinksTable({
               {
                 key: "status",
                 label: "Status",
-                value: statusFilter,
+                values: statusFilter,
                 options: STATUS_OPTIONS,
                 onChange: onStatusChange,
               },

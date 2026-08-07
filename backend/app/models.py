@@ -13,7 +13,7 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(255))
     name: Mapped[str] = mapped_column(String(255))
-    role: Mapped[str] = mapped_column(String(16), default="manager", index=True)
+    role: Mapped[str] = mapped_column(String(32), default="manager", index=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     last_active_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -94,6 +94,85 @@ class PipelineEntry(Base):
     probability: Mapped[str] = mapped_column(String(16), default="")
     status: Mapped[str] = mapped_column(String(64), default="", index=True)
     details: Mapped[str] = mapped_column(Text, default="")
+    activity_logs_json: Mapped[str] = mapped_column(Text, default="[]")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    created_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    created_by: Mapped[User | None] = relationship()
+
+
+class SalesActivity(Base):
+    """Sales meeting activities — matches Sales Activities template.xlsx."""
+
+    __tablename__ = "sales_activities"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    sales_person: Mapped[str] = mapped_column(String(255), default="", index=True)
+    customer_name: Mapped[str] = mapped_column(String(255), default="", index=True)
+    meeting_date: Mapped[str] = mapped_column(String(32), default="")
+    contact_person: Mapped[str] = mapped_column(String(255), default="")
+    contact_number: Mapped[str] = mapped_column(String(64), default="")
+    meeting_outputs: Mapped[str] = mapped_column(Text, default="")
+    activity_logs_json: Mapped[str] = mapped_column(Text, default="[]")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    created_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    created_by: Mapped[User | None] = relationship()
+
+
+class Quotation(Base):
+    """Budgetary + Formal quotation workflow (client process slides)."""
+
+    __tablename__ = "quotations"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    quote_number: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    phase: Mapped[str] = mapped_column(String(16), default="budgetary", index=True)  # budgetary | formal
+    status: Mapped[str] = mapped_column(String(64), default="Budgetary Quote Prepared", index=True)
+
+    quotation_date: Mapped[str] = mapped_column(String(32), default="")
+    sales_person: Mapped[str] = mapped_column(String(255), default="")
+    partner: Mapped[str] = mapped_column(String(255), default="", index=True)
+    end_user: Mapped[str] = mapped_column(String(255), default="")
+    country: Mapped[str] = mapped_column(String(64), default="")
+    brand: Mapped[str] = mapped_column(String(64), default="")
+    products: Mapped[str] = mapped_column(Text, default="")
+    deal_value: Mapped[str] = mapped_column(String(64), default="")
+    gp_value: Mapped[str] = mapped_column(String(64), default="")
+    contact_person: Mapped[str] = mapped_column(String(255), default="")
+    closure_date: Mapped[str] = mapped_column(String(32), default="")
+    probability: Mapped[str] = mapped_column(String(16), default="")
+    details: Mapped[str] = mapped_column(Text, default="")
+    si_attachment_name: Mapped[str] = mapped_column(String(255), default="")
+    si_attachment_note: Mapped[str] = mapped_column(Text, default="")
+
+    quotation_submission_date: Mapped[str] = mapped_column(String(32), default="")
+    closure_reason: Mapped[str] = mapped_column(String(128), default="")
+    closure_remarks: Mapped[str] = mapped_column(Text, default="")
+
+    # Formal / order fields
+    parent_quote_id: Mapped[int | None] = mapped_column(ForeignKey("quotations.id"), nullable=True)
+    formal_submission_date: Mapped[str] = mapped_column(String(32), default="")
+    po_file_name: Mapped[str] = mapped_column(String(255), default="")
+    po_note: Mapped[str] = mapped_column(Text, default="")
+    oem: Mapped[str] = mapped_column(String(255), default="")
+    order_date: Mapped[str] = mapped_column(String(32), default="")
+    order_details: Mapped[str] = mapped_column(Text, default="")
+    expected_delivery_date: Mapped[str] = mapped_column(String(32), default="")
+    order_submission_date: Mapped[str] = mapped_column(String(32), default="")
+    order_remarks: Mapped[str] = mapped_column(Text, default="")
+    invoice_file_name: Mapped[str] = mapped_column(String(255), default="")
+    delivery_docs_note: Mapped[str] = mapped_column(Text, default="")
+    delivery_date: Mapped[str] = mapped_column(String(32), default="")
+    delivery_remarks: Mapped[str] = mapped_column(Text, default="")
+    payment_received_date: Mapped[str] = mapped_column(String(32), default="")
+    payment_docs_note: Mapped[str] = mapped_column(Text, default="")
+    payment_remarks: Mapped[str] = mapped_column(Text, default="")
+
+    followups_json: Mapped[str] = mapped_column(Text, default="[]")
+    approvals_json: Mapped[str] = mapped_column(Text, default="[]")
+    activity_logs_json: Mapped[str] = mapped_column(Text, default="[]")
+
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     created_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)

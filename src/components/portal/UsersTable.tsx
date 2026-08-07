@@ -20,23 +20,29 @@ import {
 } from "./DataTable";
 import { formatDateTime } from "@/lib/utils";
 import type { PortalUser } from "@/lib/types";
-import { getStoredUser } from "@/lib/auth";
+import { getStoredUser, roleLabel } from "@/lib/auth";
 
 const ROLE_OPTIONS = [
-  { value: "all", label: "All Roles" },
-  { value: "manager", label: "Managers" },
   { value: "admin", label: "Admins" },
+  { value: "manager", label: "Sales Persons" },
+  { value: "finance_manager", label: "Finance Managers" },
+  { value: "sales_head", label: "Sales Heads" },
+  { value: "staff", label: "Salicru Staff" },
 ];
 
 function RoleBadge({ role }: { role: string }) {
   const isAdmin = role === "admin";
+  const isStaff = role === "staff";
   const Icon = isAdmin ? ShieldCheck : UserCog;
+  const tone = isAdmin
+    ? "bg-[#F7931E]/12 text-[#C56F0A] border-[#F7931E]/20"
+    : isStaff
+      ? "bg-violet-50 text-violet-700 border-violet-200"
+      : "bg-[#0EA5E9]/10 text-[#0369A1] border-sky-200/80";
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-[0.06em] border whitespace-nowrap shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] ${
-      isAdmin ? "bg-[#F7931E]/12 text-[#C56F0A] border-[#F7931E]/20" : "bg-[#0EA5E9]/10 text-[#0369A1] border-sky-200/80"
-    }`}>
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-[0.06em] border whitespace-nowrap shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] ${tone}`}>
       <Icon className="w-3 h-3 flex-shrink-0" strokeWidth={2.25} />
-      {isAdmin ? "Admin" : "Manager"}
+      {roleLabel(role)}
     </span>
   );
 }
@@ -90,10 +96,10 @@ interface UsersTableProps {
   users: PortalUser[];
   loading?: boolean;
   search: string;
-  roleFilter: string;
+  roleFilter: string[];
   total?: number;
   onSearchChange: (value: string) => void;
-  onRoleChange: (value: string) => void;
+  onRoleChange: (value: string[]) => void;
   onAddUser: () => void;
   onBlockToggle: (user: PortalUser) => void;
   onPromote: (user: PortalUser) => void;
@@ -107,7 +113,7 @@ export function UsersTable({
   users,
   loading = false,
   search,
-  roleFilter,
+  roleFilter = [],
   total,
   onSearchChange,
   onRoleChange,
@@ -169,7 +175,7 @@ export function UsersTable({
               {
                 key: "role",
                 label: "Role",
-                value: roleFilter,
+                values: roleFilter,
                 options: ROLE_OPTIONS,
                 onChange: onRoleChange,
               },
